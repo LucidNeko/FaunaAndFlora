@@ -23,7 +23,7 @@
 cmake_minimum_required(VERSION 3.1)
 
 # Assignment Name
-set(COMP308_ASSIGNMENT "a2" CACHE STRING "COMP308 Assignment Name")
+set(COMP308_ASSIGNMENT "a3" CACHE STRING "COMP308 Assignment Name")
 
 # Project
 project("COMP308_${COMP308_ASSIGNMENT}" CXX C)
@@ -56,6 +56,11 @@ add_definitions(-DFREEGLUT_LIB_PRAGMAS=0)
 # Include GLEW Subproject
 #########################################################
 add_subdirectory("${PROJECT_SOURCE_DIR}/ext/glew-1.10.0")
+
+#########################################################
+# Include STB Subproject
+#########################################################
+add_subdirectory("${PROJECT_SOURCE_DIR}/ext/stb")
 
 #########################################################
 # Set Compiler Flags

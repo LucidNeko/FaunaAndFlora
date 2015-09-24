@@ -18,6 +18,10 @@
 #include <string>
 
 #include "comp308.hpp"
+#include "imageLoader.hpp"
+#include "shaderLoader.hpp"
+#include "geometries.hpp"
+#include "lights.hpp"
 
 using namespace std;
 using namespace comp308;
@@ -39,28 +43,48 @@ float g_zfar = 1000.0;
 
 // Mouse controlled Camera values
 //
-// bool g_mouseDown = false;
-// vec2 g_mousePos;
-// float g_yRotation = 0;
-// float g_xRotation = 0;
-// float g_zoomFactor = 1.0;
+bool g_mouseDown = false;
+vec2 g_mousePos;
+float g_yRotation = 0;
+float g_xRotation = 0;
+float g_zoomFactor = 1.0;
 
-// Sets up where and what the light is
-// Called once on start up
-// 
-void initLight() {
-	float direction[]	  = {0.0f, 0.0f, 1.0f, 0.0f};
-	float diffintensity[] = {0.7f, 0.7f, 0.7f, 1.0f};
-	float ambient[]       = {0.2f, 0.2f, 0.2f, 1.0f};
 
-	glLightfv(GL_LIGHT0, GL_POSITION, direction);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE,  diffintensity);
-	glLightfv(GL_LIGHT0, GL_AMBIENT,  ambient);	
+// Scene information
+//
+GLuint g_texture = 0;
+GLuint g_shader = 0;
+bool g_useShader = false;
+
+// Object to hold the geometries
+Geometries *g_geometries = nullptr;
+
+// Object to hold the lights
+Lights *g_lights = nullptr;
+
+void initTexture() {
+	image tex("work/res/textures/brick.jpg");
+
+	glActiveTexture(GL_TEXTURE0); // Use slot 0, need to use GL_TEXTURE1 ... etc if using more than one texture PER OBJECT
+	glGenTextures(1, &g_texture); // Generate texture ID
+	glBindTexture(GL_TEXTURE_2D, g_texture); // Bind it as a 2D texture
 	
-	
-	glEnable(GL_LIGHT0);
+	// Setup sampling strategies
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	// Finnaly, actually fill the data into our texture
+	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, tex.w, tex.h, tex.glFormat(), GL_UNSIGNED_BYTE, tex.dataPointer());
+
+	cout << tex.w << endl;
 }
 
+void initShader() {
+	g_shader = makeShaderProgram("work/res/shaders/shaderDemo.vert", "work/res/shaders/shaderDemo.frag");
+}
 
 // Sets up where the camera is in the scene
 // Called every frame
@@ -75,48 +99,41 @@ void setUpCamera() {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	// Load camera transforms
-
-	// glTranslatef(0.f, 0.f, -5 * g_zoomFactor);
-	// glRotatef(g_xRotation, 1, 0, 0);
-	// glRotatef(g_yRotation, 0, 1, 0);
-	// glTranslatef(g_pan.x, -g_pan.y, -5 * g_zoomFactor);
+	glTranslatef(0, 0, -50 * g_zoomFactor);
+	glRotatef(g_xRotation, 1, 0, 0);
+	glRotatef(g_yRotation, 0, 1, 0);
 }
-
 
 // Draw function
 //
 void draw() {
 
-	// Set up camera every frame
-	setUpCamera();
-
 	// Black background
 	glClearColor(0.0f,0.0f,0.0f,1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
 	// Enable flags for normal rendering
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_NORMALIZE);
-	glEnable(GL_COLOR_MATERIAL);
 
-	// Set the current material (for all objects) to red
-	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE); 
-	glColor3f(1.0f,0.0f,0.0f);
+	setUpCamera();
+
+	g_geometries->renderGeometries();
 
 	// Disable flags for cleanup (optional)
+	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
 	glDisable(GL_NORMALIZE);
-	glDisable(GL_COLOR_MATERIAL);
 
+	// Move the buffer we just drew to the front
 	glutSwapBuffers();
 
 	// Queue the next frame to be drawn straight away
 	glutPostRedisplay();
 }
-
 
 // Reshape function
 // 
@@ -130,65 +147,90 @@ void reshape(int w, int h) {
     glViewport(0, 0, g_winWidth, g_winHeight);  
 }
 
-
-//-------------------------------------------------------------
-// [Assignment 2] :
-// Modify the keyboardCallback function and additional files,
-// to make your priman pose when the 'p' key is pressed.
-//-------------------------------------------------------------
-
 // Keyboard callback
 // Called once per button state change
 //
 void keyboardCallback(unsigned char key, int x, int y) {
-	// cout << "Keyboard Callback :: key=" << key << ", x,y=(" << x << "," << y << ")" << endl;
+	cout << "Keyboard Callback :: key=" << key << ", x,y=(" << x << "," << y << ")" << endl;
 	// YOUR CODE GOES HERE
 	// ...
-
 }
-
 
 // Special Keyboard callback
 // Called once per button state change
 //
 void specialCallback(int key, int x, int y) {
-	// cout << "Special Callback :: key=" << key << ", x,y=(" << x << "," << y << ")" << endl;
-	
+	cout << "Special Callback :: key=" << key << ", x,y=(" << x << "," << y << ")" << endl;
+	// YOUR CODE GOES HERE
+	// ...
 }
 
-
 // Mouse Button Callback function
-// (x,y) :: (0,0) is top left and (g_winWidth, g_winHeight) is bottom right
-// state :: 0 is down, 1 is up
-// 
 // Called once per button state change
 // 
 void mouseCallback(int button, int state, int x, int y) {
-	//cout << "Mouse Callback :: button=" << button << ", state=" << state << ", (" << x << "," << y << ")" << endl;
+	cout << "Mouse Callback :: button=" << button << ", state=" << state << ", x,y=(" << x << "," << y << ")" << endl;
+	// YOUR CODE GOES HERE
+	// ...
+	switch(button){
 
+		case 0: // left mouse button
+			g_mouseDown = (state==0);
+			g_mousePos = vec2(x, y);
+			break;
+
+		case 2: // right mouse button
+			if (state==0)
+				g_useShader = !g_useShader;
+			break;
+
+		case 3: // scroll foward/up
+			g_zoomFactor /= 1.1;
+			break;
+
+		case 4: // scroll back/down
+			g_zoomFactor *= 1.1;
+			break;
+	}
 }
-
 
 // Mouse Motion Callback function
 // Called once per frame if the mouse has moved and
 // at least one mouse button has an active state
 // 
 void mouseMotionCallback(int x, int y) {
-	//cout << "Mouse Motion Callback :: (" << x << "," << y << ")" << endl;
-
+	cout << "Mouse Motion Callback :: x,y=(" << x << "," << y << ")" << endl;
+	// YOUR CODE GOES HERE
+	// ...
+	if (g_mouseDown) {
+		vec2 dif = vec2(x,y) - g_mousePos;
+		g_mousePos = vec2(x,y);
+		g_yRotation += 0.3 * dif.x;
+		g_xRotation += 0.3 * dif.y;
+	}
 }
 
 //Main program
 // 
 int main(int argc, char **argv) {
 
+	if(argc != 1){
+		cout << "No arguments expected" << endl;
+		exit(EXIT_FAILURE);
+	}
+
 	// Initialise GL, GLU and GLUT
 	glutInit(&argc, argv);
+
+	// Setting up the display
+	// - RGB color model + Alpha Channel = GLUT_RGBA
+	// - Double buffered = GLUT_DOUBLE
+	// - Depth buffer = GLUT_DEPTH
 	glutInitDisplayMode(GLUT_RGBA|GLUT_DOUBLE|GLUT_DEPTH);
 
 	// Initialise window size and create window
 	glutInitWindowSize(g_winWidth, g_winHeight);
-	g_mainWindow = glutCreateWindow("COMP308 Assignment 2");
+	g_mainWindow = glutCreateWindow("COMP308 Assignment 3");
 
 
 	// Initilise GLEW
@@ -202,6 +244,8 @@ int main(int argc, char **argv) {
 	cout << "Using OpenGL " << glGetString(GL_VERSION) << endl;
 	cout << "Using GLEW " << glewGetString(GLEW_VERSION) << endl;
 
+
+
 	// Register functions for callback
 	glutDisplayFunc(draw);
 	glutReshapeFunc(reshape);
@@ -212,15 +256,21 @@ int main(int argc, char **argv) {
 	glutMouseFunc(mouseCallback);
 	glutMotionFunc(mouseMotionCallback);
 
-	// Create a light on the camera
-	initLight();
+	// initLight();
+	initShader();
+	initTexture();
 
-	// Finally create our geometry
+	glEnable(GL_NORMALIZE);
 
-	// Loop required by OpenGL
-	// This will not return until we tell OpenGL to finish
+	g_geometries = new Geometries();
+	g_lights = new Lights();
+
+	// Loop required by GLUT
+	// This will not return until we tell GLUT to finish
 	glutMainLoop();
 
 	// Don't forget to delete all pointers that we made
+	delete g_geometries;
+	delete g_lights;
 	return 0;
 }
