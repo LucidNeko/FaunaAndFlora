@@ -1,3 +1,10 @@
+# Build
+[Bb]uild/
+
+# Sublime
+*.sublime-project
+*.sublime-workspace
+
 # Compiled Object files
 *.slo
 *.lo
