@@ -22,6 +22,7 @@
 #include "shaderLoader.hpp"
 #include "geometries.hpp"
 #include "lights.hpp"
+#include "particleSystem.hpp"
 
 using namespace std;
 using namespace comp308;
@@ -62,6 +63,10 @@ Geometries *g_geometries = nullptr;
 // Object to hold the lights
 Lights *g_lights = nullptr;
 
+// Particles
+//
+ParticleSystem *g_particleSystem = nullptr;
+GLuint g_mrtShader = 0;
 void initTexture() {
 	image tex("work/res/textures/brick.jpg");
 
@@ -84,6 +89,7 @@ void initTexture() {
 
 void initShader() {
 	g_shader = makeShaderProgram("work/res/shaders/shaderDemo.vert", "work/res/shaders/shaderDemo.frag");
+	g_mrtShader = makeShaderProgram("work/res/shaders/mrtDemo.vert", "work/res/shaders/mrtDemo.frag");
 }
 
 // Sets up where the camera is in the scene
@@ -108,6 +114,13 @@ void setUpCamera() {
 //
 void draw() {
 
+	//log errors
+	GLenum err = GL_NO_ERROR;
+	while((err = glGetError()) != GL_NO_ERROR)
+	{
+	  cout << "GL_ERROR: " << err << endl;
+	}
+
 	// Black background
 	glClearColor(0.0f,0.0f,0.0f,1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -120,7 +133,10 @@ void draw() {
 
 	setUpCamera();
 
-	g_geometries->renderGeometries();
+	// g_geometries->renderGeometries();
+
+	g_particleSystem->tick(1.f/60.f);
+	g_particleSystem->render();
 
 	// Disable flags for cleanup (optional)
 	glDisable(GL_TEXTURE_2D);
@@ -264,6 +280,7 @@ int main(int argc, char **argv) {
 
 	g_geometries = new Geometries();
 	g_lights = new Lights();
+	g_particleSystem = new ParticleSystem();
 
 	// Loop required by GLUT
 	// This will not return until we tell GLUT to finish

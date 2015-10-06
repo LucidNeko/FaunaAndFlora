@@ -10,7 +10,11 @@ SET(headers
 	"shaderLoader.hpp"
 	"geometry.hpp"
 	"geometries.hpp"
-	"lights.hpp"	
+	"lights.hpp"
+	"particleSystem.hpp"
+	"particleConstraint.hpp"
+	"particleConstraintPin.hpp"
+	"particleConstraintDistance.hpp"
 )
 
 
@@ -20,6 +24,7 @@ SET(sources
 	"geometry.cpp"
 	"geometries.cpp"
 	"lights.cpp"	
+	"particleSystem.cpp"
 )
 
 # Add executable target and link libraries
