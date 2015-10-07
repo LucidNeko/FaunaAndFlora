@@ -12,9 +12,13 @@ SET(headers
 	"geometries.hpp"
 	"lights.hpp"
 	"particleSystem.hpp"
+	"particleSystemBasic.hpp"
+	"particleSystemSwarm.hpp"
 	"particleConstraint.hpp"
 	"particleConstraintPin.hpp"
 	"particleConstraintDistance.hpp"
+	"particleConstraintAngle.hpp"
+	"particleConstraintPlane.hpp"
 )
 
 

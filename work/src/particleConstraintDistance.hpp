@@ -2,6 +2,7 @@
 
 #include "particleConstraint.hpp"
 #include <cmath>
+#include <random>
 
 class ParticleConstraintDistance: public ParticleConstraint {
 private:
@@ -12,6 +13,18 @@ private:
 	float m_restingDistance;
 	float m_softness;
 public:
+
+	ParticleConstraintDistance(float *a, float *b, float softness) {
+		m_a = a;
+		m_b = b;
+
+		float dx = m_a[0] - m_b[0];
+		float dy = m_a[1] - m_b[1];
+		float dz = m_a[2] - m_b[2];
+
+		m_restingDistance = sqrt(dx*dx + dy*dy + dz*dz);
+		m_softness = softness;
+	}	
 
 	ParticleConstraintDistance(float *a, float *b, float restingDistance, float softness) {
 		m_a = a;
@@ -26,10 +39,23 @@ public:
 		float dx = m_a[0] - m_b[0];
 		float dy = m_a[1] - m_b[1];
 		float dz = m_a[2] - m_b[2];
+
+		//dislodge if overlapping
+		if(dx == 0 && dy == 0 && dz == 0) {
+			dx = -1 + (rand()/(double(RAND_MAX) + 1))*2 * 0.00001f;
+			dy = -1 + (rand()/(double(RAND_MAX) + 1))*2 * 0.00001f;
+			dz = -1 + (rand()/(double(RAND_MAX) + 1))*2 * 0.00001f;
+		}
+
 		float d = sqrt(dx*dx + dy*dy + dz*dz);
 
+		if(d > m_restingDistance) {
+			return true;
+		}
+
 		if(d < 0.01f) {
-			d = 0;
+			// d = 0;
+			d = m_restingDistance;
 		} else {
 			d = (m_restingDistance - d) / d;
 		}
@@ -48,7 +74,7 @@ public:
 		m_b[1] -= ty;
 		m_b[2] -= tz;
 
-		return false; //don't delete
+		return false; //don't delete			
 	}
 
 	void render() {

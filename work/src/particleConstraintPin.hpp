@@ -11,6 +11,14 @@ private:
 	float m_z;
 public:
 
+	ParticleConstraintPin(float *particle) {
+		m_a = particle;
+
+		m_x = m_a[0];
+		m_y = m_a[1];
+		m_z = m_a[2];
+	}
+
 	ParticleConstraintPin(float *particle, float x, float y, float z) {
 		m_a = particle;
 

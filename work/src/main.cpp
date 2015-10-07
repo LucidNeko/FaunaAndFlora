@@ -23,6 +23,8 @@
 #include "geometries.hpp"
 #include "lights.hpp"
 #include "particleSystem.hpp"
+#include "particleSystemBasic.hpp"
+#include "particleSystemSwarm.hpp"
 
 using namespace std;
 using namespace comp308;
@@ -143,6 +145,9 @@ void draw() {
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
 	glDisable(GL_NORMALIZE);
+
+	// g_particleSystem->tick(1.f/60.f);
+	// g_particleSystem->render();
 
 	// Move the buffer we just drew to the front
 	glutSwapBuffers();
@@ -280,7 +285,8 @@ int main(int argc, char **argv) {
 
 	g_geometries = new Geometries();
 	g_lights = new Lights();
-	g_particleSystem = new ParticleSystem();
+	g_particleSystem = new SwarmParticleSystem(200, 6);
+	g_particleSystem->create();
 
 	// Loop required by GLUT
 	// This will not return until we tell GLUT to finish
