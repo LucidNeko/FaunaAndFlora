@@ -23,12 +23,12 @@ ParticleSystem::ParticleSystem() {
 
 	for(uint i = 6; i < (MAX_PARTICLES-1)*6; i+=6) {
 		for(uint j = 12; j < MAX_PARTICLES*6; j+=6) {
-			ParticleConstraint *constraint = new ParticleConstraintDistance(i,j,5,0.01f);
+			ParticleConstraint *constraint = new ParticleConstraintDistance(&particles[i],&particles[j],5.f,0.01f);
 			constraints.push_back(constraint);
 		}
 	}
 
-	ParticleConstraint *pin = new ParticleConstraintPin(0, 0, 0, 0);
+	ParticleConstraint *pin = new ParticleConstraintPin(&particles[0], 0, 0, 0);
 	constraints.push_back(pin);
 
 	// GLuint renderbufferID;
@@ -42,7 +42,7 @@ void ParticleSystem::tick(float delta) {
 
 	for(uint i = 0; i < 6; i++) {
 		for(uint j = 0; j < constraints.size(); j++) {
-			constraints[j]->solve(particles);
+			constraints[j]->solve();
 		}
 	}
 }
@@ -51,7 +51,7 @@ void ParticleSystem::render() {
 	// glUseProgram(g_mrtShader);
 
 	for(uint i = 0; i < constraints.size(); i++) {
-		constraints[i]->render(particles);
+		constraints[i]->render();
 	}
 
 	glColor3f(1,0,0);
