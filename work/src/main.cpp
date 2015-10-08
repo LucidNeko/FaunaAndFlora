@@ -137,8 +137,8 @@ void draw() {
 
 	// g_geometries->renderGeometries();
 
-	g_particleSystem->tick(1.f/60.f);
-	g_particleSystem->render();
+	// g_particleSystem->tick(1.f/60.f);
+	// g_particleSystem->render();
 
 	// Disable flags for cleanup (optional)
 	glDisable(GL_TEXTURE_2D);
@@ -146,8 +146,8 @@ void draw() {
 	glDisable(GL_LIGHTING);
 	glDisable(GL_NORMALIZE);
 
-	// g_particleSystem->tick(1.f/60.f);
-	// g_particleSystem->render();
+	g_particleSystem->tick(1.f/60.f);
+	g_particleSystem->render();
 
 	// Move the buffer we just drew to the front
 	glutSwapBuffers();

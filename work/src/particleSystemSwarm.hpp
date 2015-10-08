@@ -37,17 +37,24 @@ public:
 
 		for(uint i = 0; i < 50; i++) {
 			float *p;
-			createParticle(0,0,0,&p);
+			// createParticle(0,0,0,&p);
+			createParticle(-20 + (rand()/(double(RAND_MAX) + 1))*40, 
+						   -20 + (rand()/(double(RAND_MAX) + 1))*40,
+						   -20 + (rand()/(double(RAND_MAX) + 1))*40, &p);
 
 			m_constraints.push_back(new Attraction(p, m_pin, 0.1f, 0.5f));
-			m_constraints.push_back(new Random(p, 0.005f));
+			// m_constraints.push_back(new Random(p, 0.005f));
+			m_constraints.push_back(new Move(p, 0.001f));
 		}
 
 		m_constraints.push_back(new Attraction(a, b, 0.001f, 0.5f));
 		m_constraints.push_back(new Attraction(b, a, 0.001f, 0.5f));
 
-		m_constraints.push_back(new Random(a, 0.001f));
-		m_constraints.push_back(new Random(b, 0.001f));
+		// m_constraints.push_back(new Random(a, 0.001f));
+		// m_constraints.push_back(new Random(b, 0.001f));
+
+		m_constraints.push_back(new Move(a, 0.001f));
+		m_constraints.push_back(new Move(b, 0.001f));
 
 		cout << "Created " << m_particleCount << " particles." << endl;
 	}

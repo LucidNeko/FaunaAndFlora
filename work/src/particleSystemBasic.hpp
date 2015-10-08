@@ -23,7 +23,7 @@ public:
 
 	void create() {
 
-		float *p[MAX_PARTICLES];
+		float **p = new float*[MAX_PARTICLES];
 
 		createParticle(0,0,0,&p[0]);
 		m_constraints.push_back(new ParticleConstraintPin(p[0]));
@@ -62,6 +62,8 @@ public:
 		for(uint i = 1; i < m_particleCount-1; i++) {
 			m_constraints.push_back(new ParticleConstraintDistance(p[m_particleCount-1], p[i], 20, 0.01f));								
 		}
+
+		delete[] p;
 
 
 

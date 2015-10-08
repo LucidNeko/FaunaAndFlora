@@ -1,6 +1,68 @@
 #pragma once
 
+#include <cmath>
+
 #include "particleConstraint.hpp"
+
+class Move: public ParticleConstraint {
+private:
+	float *m_a;
+
+	float m_speed;
+public: 
+	Move(float *a, float speed) {
+		m_a = a;
+		m_speed = speed;
+	}
+
+	bool solve() {
+		float dx = m_a[0] - m_a[3];
+		float dy = m_a[1] - m_a[4];
+		float dz = m_a[2] - m_a[5];
+
+		if(dx == 0 && dy == 0 && dz == 0) {
+			dy = 1;
+		}
+
+		float d = sqrt(dx*dx + dy*dy + dz*dz);
+		float ds = 1/d;
+
+		//normalize
+		dx *= ds;
+		dy *= ds;
+		dz *= ds;
+
+		dx += -5 + (rand()/(double(RAND_MAX)))*10;
+		dy += -5 + (rand()/(double(RAND_MAX)))*10;
+		dz += -5 + (rand()/(double(RAND_MAX)))*10;
+
+		d = sqrt(dx*dx + dy*dy + dz*dz);
+		ds = 1/d;		
+
+		dx *= ds;
+		dy *= ds;
+		dz *= ds;
+
+		m_a[0] += dx * m_speed;
+		m_a[1] += dy * m_speed;
+		m_a[2] += dz * m_speed;
+
+		return false;
+	}
+
+	void render() {
+		float dx = m_a[0] - m_a[3];
+		float dy = m_a[1] - m_a[4];
+		float dz = m_a[2] - m_a[5];
+
+		glColor3f(0,1,0);
+		glBegin(GL_LINES);
+			// glVertex3f(m_a[3], m_a[4], m_a[5]);
+			glVertex3f(m_a[0], m_a[1], m_a[2]);
+			glVertex3f(m_a[0] + dx*5, m_a[1]+ dy*5, m_a[2]+ dz*5);
+		glEnd();
+	}
+};
 
 class Attraction: public ParticleConstraint {
 private:
