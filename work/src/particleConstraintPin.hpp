@@ -39,17 +39,17 @@ public:
 	void render() {
 		glColor3f(0,1,0);
 		glBegin(GL_LINES);
-			glVertex3f(m_x-1, m_y-1, m_z-1);
-			glVertex3f(m_x+1, m_y+1, m_z+1);
+			glVertex3f(m_x-0.5f, m_y-0.5f, m_z-0.5f);
+			glVertex3f(m_x+0.5f, m_y+0.5f, m_z+0.5f);
 
-			glVertex3f(m_x+1, m_y-1, m_z-1);
-			glVertex3f(m_x-1, m_y+1, m_z+1);
+			glVertex3f(m_x+0.5f, m_y-0.5f, m_z-0.5f);
+			glVertex3f(m_x-0.5f, m_y+0.5f, m_z+0.5f);
 
-			glVertex3f(m_x-1, m_y-1, m_z+1);
-			glVertex3f(m_x+1, m_y+1, m_z-1);
+			glVertex3f(m_x-0.5f, m_y-0.5f, m_z+0.5f);
+			glVertex3f(m_x+0.5f, m_y+0.5f, m_z-0.5f);
 
-			glVertex3f(m_x+1, m_y-1, m_z+1);
-			glVertex3f(m_x-1, m_y+1, m_z-1);
+			glVertex3f(m_x+0.5f, m_y-0.5f, m_z+0.5f);
+			glVertex3f(m_x-0.5f, m_y+0.5f, m_z-0.5f);
 		glEnd();
 	}
 };

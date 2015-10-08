@@ -4,6 +4,51 @@
 
 #include "particleConstraint.hpp"
 
+class Follow: public ParticleConstraint {
+private:
+	float *m_src;
+	float *m_dst;
+
+	float m_speed;
+
+public:
+	Follow(float *src, float *dst, float speed) {
+		m_src = src;
+		m_dst = dst;
+
+		m_speed = speed;
+	}
+
+	bool solve() {
+		float dx = m_dst[0] - m_src[0];
+		float dy = m_dst[1] - m_src[1];
+		float dz = m_dst[2] - m_src[2];
+
+		if(dx == 0 && dy == 0 && dz == 0) {
+			dy = 1;
+		}
+
+		//break condition
+		if(sqrt(dx*dx + dy*dy + dz*dz) < 1.2f) {
+			return true;
+		}
+
+		m_src[0] += dx * m_speed;
+		m_src[1] += dy * m_speed;
+		m_src[2] += dz * m_speed;
+
+		return false;
+	}
+
+	void render() {
+		glColor3f(0.5f,0.5f,0);
+		glBegin(GL_LINES);
+			glVertex3f(m_src[0], m_src[1], m_src[2]);
+			glVertex3f(m_dst[0], m_dst[1], m_dst[2]);
+		glEnd();
+	}
+};
+
 class Move: public ParticleConstraint {
 private:
 	float *m_a;

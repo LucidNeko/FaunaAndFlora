@@ -47,16 +47,16 @@ void ParticleSystem::render() {
 		m_constraints[i]->render();
 	}
 
-	glColor3f(1,0,0);
-	glBegin(GL_TRIANGLES);
-		glVertex2i(-1, -1);
-		glVertex2i(1, -1);
-		glVertex2i(0, 1);
+	// glColor3f(1,0,0);
+	// glBegin(GL_TRIANGLES);
+	// 	glVertex2i(-1, -1);
+	// 	glVertex2i(1, -1);
+	// 	glVertex2i(0, 1);
 
-		glVertex2i(1, -1);
-		glVertex2i(-1, -1);
-		glVertex2i(0, 1);
-	glEnd();
+	// 	glVertex2i(1, -1);
+	// 	glVertex2i(-1, -1);
+	// 	glVertex2i(0, 1);
+	// glEnd();
 
 	glPushMatrix();
 
@@ -67,6 +67,7 @@ void ParticleSystem::render() {
 		exit(EXIT_FAILURE);
 	}
 
+	glColor3f(1,0,0);
 	for(uint i = 0; i < m_particleCount*6; i+=6) {
 		float x = m_particles[i];
 		float y = m_particles[i+1];
@@ -74,7 +75,7 @@ void ParticleSystem::render() {
 
 		glPushMatrix();
 			glTranslatef(x, y, z);
-			gluSphere(quad, 0.1f, 16, 16);
+			gluSphere(quad, 0.1f, 8, 8);
 		glPopMatrix();
 	}
 
