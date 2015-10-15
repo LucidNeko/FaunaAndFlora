@@ -520,6 +520,7 @@ void reshape(int w, int h) {
     if (h == 0) h = 1;
 	g_winWidth = w;
 	g_winHeight = h;
+	init();
     glViewport(0, 0, g_winWidth, g_winHeight);  
 }
 //   ▄█  ███▄▄▄▄      ▄███████▄ ███    █▄      ███     
