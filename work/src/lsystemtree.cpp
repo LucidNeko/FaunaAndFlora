@@ -17,25 +17,25 @@ GLfloat mats[][3][4] = {{{0.1,0.18725,0.1745,1.0},{0.396,0.74151,0.69102,1.0},{0
                         {{0.05375,0.05,0.06625,1.0},{0.18275,0.17,0.22525,1.0},{0.0,0.0,0.0,1.0}}};//5: obsidian
                         //{{},{},{}},
 
-void forward(LSystem *ls){
-    glTranslatef(0.0,0.0,0.1);
+GLfloat getl(LSystem *ls){
+    GLfloat l;
+    ls->currentbranchcount--;
+    if(ls->currentbranchcount > 0) l = ls->maxfwdlen;
+    else if(ls->currentbranchcount==0) l = ls->fwdlen;
+    else l = 0.0;
+    return l;
 }
 
-//void forwarddraw(LSystem *ls){
-//    glBegin(GL_LINES);
-//    glVertex3f(0.0,0.0,0.0);
-//    glVertex3f(0.0,0.0,0.1);
-//    glEnd();
-//    forward(ls);
-//}
+void forward(LSystem *ls){
+    glTranslatef(0.0,0.0,getl(ls));
+}
 
 void forwarddraw(LSystem *ls){
     GLUquadricObj *q = gluNewQuadric();
-    gluCylinder(q,ls->thickness.back(),ls->thickness.back(),0.1,3,3);
+    gluCylinder(q,ls->thickness.back(),ls->thickness.back(),getl(ls),3,3);
     forward(ls);
 }
 
-void inccolor(LSystem *ls){}
 void decdiam(LSystem *ls){
     ls->thickness.back()*=0.8;
     glLineWidth(ls->thickness.back());
@@ -71,7 +71,6 @@ LSystem::LSystem(string rulesstr, string a, GLfloat th, string colours):theta(th
     insts['\\']=rotzpos;
     insts['/']=rotzneg;
     insts['|']=flip;
-    insts['`']=inccolor;
     insts['!']=decdiam;
 
     original_theta = th;
@@ -100,10 +99,17 @@ void LSystem::tick(){
     counter += 0.02;
     theta = original_theta + sin(counter);
     radtheta = (theta*PI)/180.0;
+    if(fwdlen<maxfwdlen)fwdlen += 0.11;
+    else{
+        fwdlen = 0.0;
+        grownbranchcount++;
+        currentbranchcount=grownbranchcount;
+    }
 }
 
 void LSystem::draw(int iteration){
     draw_pot();
+    currentbranchcount=grownbranchcount;
 
     thickness.clear();
     thickness.push_back(0.013);
@@ -114,19 +120,15 @@ void LSystem::draw(int iteration){
         map<char,string>::iterator it1;
         string repl;
         for(int iter=0;iter<iteration;iter++){
-            //cout << iter << ": " << s << "\n";
             for(uint i=0; i<s.length(); i++){
                 it1 = rules.find(s[i]);
                 if(it1 != rules.end()){
                     repl = it1->second;
                     s.replace(i,1,repl);
                     i+=repl.length()-1;
-                    //cout << "   " << s[i] << " to " << repl << "  :::  " << s << "\n";
                 }
             }
-            //cout << iter << ": " << s << "\n";
         }
-        //cout << "\n\n";
         evald[iteration]=s;
     }
     else{
@@ -179,15 +181,13 @@ void LSystem::setmat(int mati){
 
 void LSystem::drawpoly(string polystr){
     vec3 v = vec3(0.0,0.0,0.0);
-    vec3 dir = vec3(0.0,0.0,0.1);
-    //cout << polystr;
+    vec3 dir = vec3(0.0,0.0,getl(this));
     GLfloat flip = 1.0;
 
     glBegin(GL_POLYGON);
     for(uint i=0; i<polystr.length(); i++){
         char c = polystr[i];
         if(c=='f'){
-            //cout << "drawing " << v.x << ", " << v.y << ", " << v.z <<endl;
             glVertex3f(v.x,v.y,v.z);
             v+=dir;
         }
@@ -198,13 +198,11 @@ void LSystem::drawpoly(string polystr){
         else if(c=='&') rx(dir,radtheta);
         else if(c=='^') rx(dir,-radtheta);
         else if(c=='|') ry(dir,PI);
-        //cout << "after " << c << " dir is " << dir.x << "," << dir.y << "," << dir.z << endl;
     }
     glEnd();
 
     GLfloat revrot = atan((dir.z/dir.x)) * 180/PI;
     glRotatef(90.0+revrot,0.0,1.0,0.0);
-    //cout << "\n\n";
 }
 
 void LSystem::rx(vec3 &v, GLfloat th){

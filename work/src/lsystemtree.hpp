@@ -20,6 +20,11 @@ class LSystem{
     GLfloat original_theta;
 
 public:
+    int grownbranchcount;
+    int currentbranchcount;
+    GLfloat fwdlen = 0.0;
+    GLfloat maxfwdlen = 0.1;
+
     void tick();
     vector<GLfloat> thickness;
     GLfloat theta;
