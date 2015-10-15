@@ -22,21 +22,6 @@ varying vec3 vNormal;
 varying vec3 vPosition;
 varying vec2 vTextureCoord0;
 
-//uniform vec3 lightPos;
-// uniform float lcutoff;
-
-//uniform vec3 mambient;  // gl_FrontMaterial.ambient
-//uniform vec3 mdiffuse;  // gl_FrontMaterial.diffuse
-//uniform vec3 mspecular; // gl_FrontMaterial.specular
-//uniform float shininess;// gl_FrontMaterial.shininess
-
-//uniform vec3 lambient;  // gl_LightSource[0].ambient
-//uniform vec3 ldiffuse;  // gl_LightSource[?]
-//uniform vec3 lspecular;  // gl_LightSource[?]
-
-// uniform vec3 spotDirection;
-// uniform vec3 dirLightDir;
-
 void main() {
 
 	// AMBIENT

@@ -87,12 +87,14 @@ ParticleSystem *g_particleSystem = nullptr;
 ParticleSystem *g_particleSystemOBJ = nullptr;
 GLuint g_mrtShader = 0;
 OBJLoader *g_objLoader = nullptr;
-
-LSystem *tree = new LSystem("A:[&FL!A]/////`[&FL!A]///////`[&FL!A] "
-                           "F:S/////F "
-                           "S:FL "
-                           "L:[```^^{-f+f+f-|-f+f+f}]",
-                      "A",22.5,"0:51:25:0 14:0:51:0");
+LSystem *tree = new LSystem("P:I+[P+F]--//[--L]I[++L]-[PF]++PF "
+                           "I:FS[//&&L][//^^L]FS "
+                           "S:SFS "
+                           "L:[`{+f-ff-f+|+f-ff-f}] "
+                           "F:[&&&p`/W////W////W////W////W] "
+                           "p:FF "
+                           "W:[`^F][{&&&&-f+f|-f+f}]",
+                   "P",18.0,"0:2 16:3 13:4");
 //   ▄█  ███▄▄▄▄    ▄█      ███     
 //  ███  ███▀▀▀██▄ ███  ▀█████████▄ 
 //  ███▌ ███   ███ ███▌    ▀███▀▀██ 
@@ -358,6 +360,7 @@ void drawQuad(GLdouble winX, GLdouble winY,	GLdouble winZ){
 //               ███    ███                          
 void draw() {
 	// TICK METHODS
+	tree->tick();
 	g_particleSystem->tick(1.f/60.f);
 
 	// UPDATE LIGHT POS
@@ -388,7 +391,7 @@ void draw() {
 		glUniform1i(glGetUniformLocation(g_occlusionShader, "isLight"),0);
 		g_particleSystem->render();
 		glPushMatrix();
-			glScalef(2,2,2);
+			// glScalef(2,2,2);
 			glRotatef(-90,1,0,0);
 			tree->draw(5);
 		glPopMatrix();
@@ -432,7 +435,7 @@ void draw() {
 		glUniform1i(glGetUniformLocation(g_occlusionShader, "isLight"),0);
 		g_particleSystem->render();
 		glPushMatrix();
-			glScalef(2,2,2);
+			// glScalef(2,2,2);
 			glRotatef(-90,1,0,0);
 			tree->draw(5);
 		glPopMatrix();
@@ -468,7 +471,7 @@ void draw() {
 		glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
 		glMaterialf(GL_FRONT, GL_SHININESS, shininess);
 		glPushMatrix();
-			glScalef(2,2,2);
+			// glScalef(2,2,2);
 			glRotatef(-90,1,0,0);
 			tree->draw(5);
 		glPopMatrix();
@@ -535,25 +538,29 @@ void reshape(int w, int h) {
 void keyboardCallback(unsigned char key, int x, int y) {
 	// cout << "Keyboard Callback :: key=" << key << ", x,y=(" << x << "," << y << ")" << endl;
 		switch(key){
-		case 'w': // left mouse button
+		case 'w': // 
 			lightPos.y-=0.5; break;
-		case 'a': // right mouse button
+		case 'a': // 
 			lightPos.x-=0.5; break;
-		case 's': // scroll foward/up
+		case 's': // 
 			lightPos.y+=0.5;break;
-		case 'd': // scroll back/down
+		case 'd': // 
 			lightPos.x+=0.5;break;
-		case '1': // scroll back/down
+		case 'q': // 
+			lightPos.z+=0.5;break;
+		case 'e': // 
+			lightPos.z-=0.5;break;
+		case '1': // 
 			volLightCol.x = max(volLightCol.x-0.1f, 0.0f);break;
-		case '2': // scroll back/down
+		case '2': // 
 			volLightCol.y = max(volLightCol.y-0.1f, 0.0f);break;
-		case '3': // scroll back/down
+		case '3': // 
 			volLightCol.z = max(volLightCol.z-0.1f, 0.0f);break;
-		case '4': // scroll back/down
+		case '4': // 
 			volLightCol.x = min(volLightCol.x+0.1f, 1.0f);break;
-		case '5': // scroll back/down
+		case '5': // 
 			volLightCol.y = min(volLightCol.y+0.1f, 1.0f);break;
-		case '6': // scroll back/down
+		case '6': // 
 			volLightCol.z = min(volLightCol.z+0.1f, 1.0f);break;															
 		}
 }

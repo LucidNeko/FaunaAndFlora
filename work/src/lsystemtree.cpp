@@ -31,7 +31,7 @@ void forward(LSystem *ls){
 
 void forwarddraw(LSystem *ls){
     GLUquadricObj *q = gluNewQuadric();
-    gluCylinder(q,ls->thickness.back(),ls->thickness.back(),0.1,10,10);
+    gluCylinder(q,ls->thickness.back(),ls->thickness.back(),0.1,3,3);
     forward(ls);
 }
 
@@ -162,11 +162,11 @@ void LSystem::draw(int iteration){
 
 void LSystem::draw_pot(){
     GLUquadricObj *q = gluNewQuadric();
-    gluCylinder(q,0.5,0.8,1.0,50,50);
-    gluDisk(q,0.0,0.5,50,50);
+    gluCylinder(q,0.5,0.8,1.0,30,30);
+    gluDisk(q,0.0,0.5,30,30);
     glTranslatef(0.0,0.0,0.9);
     setmat(5);
-    gluDisk(q,0.0,0.7,50,50);
+    gluDisk(q,0.0,0.7,10,10);
 }
 
 void LSystem::setmat(int mati){
