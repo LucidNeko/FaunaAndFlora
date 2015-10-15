@@ -25,6 +25,8 @@
 #include "particleSystem.hpp"
 #include "particleSystemBasic.hpp"
 #include "particleSystemSwarm.hpp"
+#include "particleSystemOBJ.hpp"
+#include "OBJLoader.hpp"
 
 using namespace std;
 using namespace comp308;
@@ -68,7 +70,11 @@ Lights *g_lights = nullptr;
 // Particles
 //
 ParticleSystem *g_particleSystem = nullptr;
+ParticleSystem *g_particleSystemOBJ = nullptr;
 GLuint g_mrtShader = 0;
+OBJLoader *g_objLoader = nullptr;
+
+
 void initTexture() {
 	image tex("work/res/textures/brick.jpg");
 
@@ -135,6 +141,11 @@ void draw() {
 
 	setUpCamera();
 
+
+	// g_objLoader->render();
+	g_particleSystemOBJ->tick(1.f/60.f);
+	g_particleSystemOBJ->render();
+
 	// g_geometries->renderGeometries();
 
 	// g_particleSystem->tick(1.f/60.f);
@@ -142,12 +153,16 @@ void draw() {
 
 	// Disable flags for cleanup (optional)
 	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_DEPTH_TEST);
+	
 	glDisable(GL_LIGHTING);
 	glDisable(GL_NORMALIZE);
 
+	
+
 	g_particleSystem->tick(1.f/60.f);
 	g_particleSystem->render();
+
+	glDisable(GL_DEPTH_TEST);
 
 	// Move the buffer we just drew to the front
 	glutSwapBuffers();
@@ -288,6 +303,9 @@ int main(int argc, char **argv) {
 	g_particleSystem = new SwarmParticleSystem(200, 6);
 	g_particleSystem->create();
 
+	g_objLoader = new OBJLoader("work/res/assets/teapot.obj");
+	g_particleSystemOBJ = new OBJParticleSystem(g_objLoader, 3500, 6);
+	g_particleSystemOBJ->create();
 	// Loop required by GLUT
 	// This will not return until we tell GLUT to finish
 	glutMainLoop();

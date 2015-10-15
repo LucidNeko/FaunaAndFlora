@@ -19,6 +19,7 @@ SET(headers
 	"particleConstraintDistance.hpp"
 	"particleConstraintAngle.hpp"
 	"particleConstraintPlane.hpp"
+	"OBJLoader.hpp"
 )
 
 
@@ -29,6 +30,7 @@ SET(sources
 	"geometries.cpp"
 	"lights.cpp"	
 	"particleSystem.cpp"
+	"OBJLoader.cpp"
 )
 
 # Add executable target and link libraries
