@@ -470,7 +470,7 @@ void draw() {
 		gluProject(lightPos.x,lightPos.y,lightPos.z,model_view,projection,viewport,&winX,&winY,&winZ);
 		// cout << "winX: " << winX << "  winY: " << winY << "  winZ: " << winZ << endl;
 		GLdouble normalizedWinX = winX/float(g_winWidth);
-		GLdouble normalizedWinY = winY/float(g_winWidth);
+		GLdouble normalizedWinY = winY/float(g_winHeight);
 		GLdouble normalizedWinZ = winZ;
 		// cout << "normalizedWinX: " << normalizedWinX << "  normalizedWinY: " << normalizedWinY << "  winZ: " << winZ << endl;
 		glUniform3f(glGetUniformLocation(g_volumetricShader, "lPos"),normalizedWinX,normalizedWinY,normalizedWinZ);
