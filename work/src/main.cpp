@@ -27,6 +27,7 @@
 #include "particleSystemSwarm.hpp"
 #include "particleSystemOBJ.hpp"
 #include "OBJLoader.hpp"
+#include "lsystemtree.hpp"
 
 using namespace std;
 using namespace comp308;
@@ -34,8 +35,8 @@ using namespace comp308;
 
 // Global variables
 // 
-GLuint g_winWidth  = 640;
-GLuint g_winHeight = 480;
+GLuint g_winWidth  = 1280;
+GLuint g_winHeight = 720;
 GLuint g_mainWindow = 0;
 
 
@@ -58,14 +59,30 @@ float g_zoomFactor = 1.0;
 // Scene information
 //
 GLuint g_texture = 0;
-GLuint g_shader = 0;
 bool g_useShader = false;
+GLuint g_volumetricShader = 0;
+GLuint g_materialShader = 0;
+GLuint g_occlusionShader = 0;
+GLuint g_texShader = 0;
+GLuint g_twoTexShader = 0;
+GLuint g_blurShader = 0;
+GLuint g_fongShader = 0;
+vec3 lightPos = vec3(10.0,05.5,-30);
+vec3 lightDir = vec3(0.0f, -1.0f, 0.0f);
+vec3 cameraPosition = vec3(0.0f,0.0f,0.0f);
 
 // Object to hold the geometries
 Geometries *g_geometries = nullptr;
 
 // Object to hold the lights
 Lights *g_lights = nullptr;
+
+unsigned int FBO0;
+unsigned int renderTexture0,depthTexture0, shadowMap0;
+unsigned int FBO1;
+unsigned int renderTexture1,depthTexture1, shadowMap1;
+unsigned int FBO2;
+unsigned int renderTexture2,depthTexture2, shadowMap2, renderTexture2_1;
 
 // Particles
 //
@@ -75,34 +92,118 @@ GLuint g_mrtShader = 0;
 OBJLoader *g_objLoader = nullptr;
 
 
+LSystem *tree = new LSystem("A:[&FL!A]/////`[&FL!A]///////`[&FL!A] "
+                           "F:S/////F "
+                           "S:FL "
+                           "L:[```^^{-f+f+f-|-f+f+f}]",
+                      "A",22.5,"0:51:25:0 14:0:51:0");
+
+//   ▄█  ███▄▄▄▄    ▄█      ███     
+//  ███  ███▀▀▀██▄ ███  ▀█████████▄ 
+//  ███▌ ███   ███ ███▌    ▀███▀▀██ 
+//  ███▌ ███   ███ ███▌     ███   ▀ 
+//  ███▌ ███   ███ ███▌     ███     
+//  ███  ███   ███ ███      ███     
+//  ███  ███   ███ ███      ███     
+//  █▀    ▀█   █▀  █▀      ▄████▀   
+//                                  
+void initLight() {
+	float direction[]	  = {lightDir.x, lightDir.y, lightDir.z, 1.0f};
+	float position[]	  = {lightPos.x,lightPos.y,lightPos.z,1.0f};
+	float diffintensity[] = {0.7f, 0.7f, 0.7f, 1.0f};
+	float ambient[]       = {0.2f, 0.2f, 0.2f, 1.0f};
+	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, direction);
+	glLightfv(GL_LIGHT0, GL_POSITION, position);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE,  diffintensity);
+	glLightfv(GL_LIGHT0, GL_AMBIENT,  ambient);	
+	glEnable(GL_LIGHT0);
+}
 void initTexture() {
 	image tex("work/res/textures/brick.jpg");
-
 	glActiveTexture(GL_TEXTURE0); // Use slot 0, need to use GL_TEXTURE1 ... etc if using more than one texture PER OBJECT
 	glGenTextures(1, &g_texture); // Generate texture ID
 	glBindTexture(GL_TEXTURE_2D, g_texture); // Bind it as a 2D texture
-	
 	// Setup sampling strategies
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
 	// Finnaly, actually fill the data into our texture
 	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, tex.w, tex.h, tex.glFormat(), GL_UNSIGNED_BYTE, tex.dataPointer());
-
-	cout << tex.w << endl;
 }
-
 void initShader() {
-	g_shader = makeShaderProgram("work/res/shaders/shaderDemo.vert", "work/res/shaders/shaderDemo.frag");
-	g_mrtShader = makeShaderProgram("work/res/shaders/mrtDemo.vert", "work/res/shaders/mrtDemo.frag");
+	g_volumetricShader = makeShaderProgram("work/res/shaders/volumetricShader.vert", "work/res/shaders/volumetricShader.frag");
+	g_materialShader = makeShaderProgram("work/res/shaders/materialShader.vert", "work/res/shaders/materialShader.frag");
+	g_occlusionShader = makeShaderProgram("work/res/shaders/occlusionShader.vert", "work/res/shaders/occlusionShader.frag");
+	g_texShader = makeShaderProgram("work/res/shaders/texShader.vert", "work/res/shaders/texShader.frag");
+	g_twoTexShader = makeShaderProgram("work/res/shaders/twoTexShader.vert", "work/res/shaders/twoTexShader.frag");
+	g_blurShader = makeShaderProgram("work/res/shaders/blurShader.vert", "work/res/shaders/blurShader.frag");
+	g_fongShader = makeShaderProgram("work/res/shaders/fongShader.vert", "work/res/shaders/fongShader.frag");
+}
+unsigned int createTexture(int w,int h,bool isDepth=false){
+	unsigned int textureId;
+	glGenTextures(1,&textureId);
+	glBindTexture(GL_TEXTURE_2D,textureId);
+	glTexImage2D(GL_TEXTURE_2D,0,(!isDepth ? GL_RGBA8 : GL_DEPTH_COMPONENT),w,h,0,isDepth ? GL_DEPTH_COMPONENT : GL_RGBA,GL_FLOAT,NULL);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+	int i;
+	i=glGetError();
+	if(i!=0){
+		std::cout << "Error happened while loading the texture: " << i << std::endl;
+	}
+	glBindTexture(GL_TEXTURE_2D,0);
+	return textureId;
 }
 
-// Sets up where the camera is in the scene
-// Called every frame
-// 
+void init(){
+
+	// FIRST FBO
+	renderTexture0=createTexture(g_winWidth,g_winHeight);
+	depthTexture0=createTexture(g_winWidth,g_winHeight,true);
+	shadowMap0=createTexture(g_winWidth,g_winHeight,true);
+	glGenFramebuffers(1,&FBO0);
+	glBindFramebuffer(GL_FRAMEBUFFER,FBO0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderTexture0,0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,depthTexture0,0);
+	int i0=glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if(i0!=GL_FRAMEBUFFER_COMPLETE){
+		std::cout << "Framebuffer is not OK, status=" << i0 << std::endl;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER,0);
+
+	// SECOND FBO
+	renderTexture1=createTexture(g_winWidth,g_winHeight);
+	depthTexture1=createTexture(g_winWidth,g_winHeight,true);
+	shadowMap1=createTexture(g_winWidth,g_winHeight,true);
+	glGenFramebuffers(1,&FBO1);
+	glBindFramebuffer(GL_FRAMEBUFFER,FBO1);
+	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderTexture1,0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,depthTexture1,0);
+	int i1=glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if(i1!=GL_FRAMEBUFFER_COMPLETE){
+		std::cout << "Framebuffer is not OK, status=" << i1 << std::endl;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER,0);	
+	
+	// THIRD FBO
+	renderTexture2=createTexture(g_winWidth,g_winHeight);
+	depthTexture2=createTexture(g_winWidth,g_winHeight,true);
+	shadowMap2=createTexture(g_winWidth,g_winHeight,true);
+	glGenFramebuffers(1,&FBO2);
+	glBindFramebuffer(GL_FRAMEBUFFER,FBO2);
+	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderTexture2,0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,depthTexture2,0);
+	int i2=glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if(i2!=GL_FRAMEBUFFER_COMPLETE){
+		std::cout << "Framebuffer is not OK, status=" << i2 << std::endl;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER,0);
+}
+
+/*
 void setUpCamera() {
 	// Set up the projection matrix
 	glMatrixMode(GL_PROJECTION);
@@ -117,7 +218,134 @@ void setUpCamera() {
 	glRotatef(g_xRotation, 1, 0, 0);
 	glRotatef(g_yRotation, 0, 1, 0);
 }
+*/
+//   ▄████████    ▄████████   ▄▄▄▄███▄▄▄▄      ▄████████    ▄████████    ▄████████ 
+//  ███    ███   ███    ███ ▄██▀▀▀███▀▀▀██▄   ███    ███   ███    ███   ███    ███ 
+//  ███    █▀    ███    ███ ███   ███   ███   ███    █▀    ███    ███   ███    ███ 
+//  ███          ███    ███ ███   ███   ███  ▄███▄▄▄      ▄███▄▄▄▄██▀   ███    ███ 
+//  ███        ▀███████████ ███   ███   ███ ▀▀███▀▀▀     ▀▀███▀▀▀▀▀   ▀███████████ 
+//  ███    █▄    ███    ███ ███   ███   ███   ███    █▄  ▀███████████   ███    ███ 
+//  ███    ███   ███    ███ ███   ███   ███   ███    ███   ███    ███   ███    ███ 
+//  ████████▀    ███    █▀   ▀█   ███   █▀    ██████████   ███    ███   ███    █▀  
+//                                                         ███    ███              
+void setUpCamera() {
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(g_fovy * g_zoomFactor, float(g_winWidth) / float(g_winHeight), g_znear, g_zfar);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glTranslatef(0, 0, -10);
+	glRotatef(g_xRotation, 1, 0, 0);
+	glRotatef(g_yRotation, 0, 1, 0);
+}
+//     ▄████████  ▄████████    ▄████████ ███▄▄▄▄      ▄████████ 
+//    ███    ███ ███    ███   ███    ███ ███▀▀▀██▄   ███    ███ 
+//    ███    █▀  ███    █▀    ███    █▀  ███   ███   ███    █▀  
+//    ███        ███         ▄███▄▄▄     ███   ███  ▄███▄▄▄     
+//  ▀███████████ ███        ▀▀███▀▀▀     ███   ███ ▀▀███▀▀▀     
+//           ███ ███    █▄    ███    █▄  ███   ███   ███    █▄  
+//     ▄█    ███ ███    ███   ███    ███ ███   ███   ███    ███ 
+//   ▄████████▀  ████████▀    ██████████  ▀█   █▀    ██████████ 
+//                                                              
+void drawScene(){
+	// Begin Draw
+	glPushMatrix();
+	glTranslatef(0.20f,0.20f,2.0f);
+	// FLOOR
+	// glPushMatrix();
+	// glColor4f(1,0,0,1);
+	// glScalef(2.0,0.2,2.0);
+	// glutSolidCube(1);
+	// glPopMatrix();
+	// obelisk
+	glPushMatrix();
+	glColor4f(0,1,0,1);
+	glScalef(0.2,2.0,0.4);
+	glutSolidCube(1);
+	glPopMatrix();
 
+	glPushMatrix();
+	glColor4f(0,1,0,1);
+	glTranslatef(1,0,0);
+	glScalef(0.2,2.0,0.4);
+	glutSolidCube(1);
+	glPopMatrix();
+
+	glPushMatrix();
+	glColor4f(0,1,0,1);
+	glTranslatef(0.5,0.5,0);
+	glScalef(2.0,0.2,0.4);
+	glutSolidCube(1);
+	glPopMatrix();
+
+	glPushMatrix();
+	glColor4f(0,1,0,1);
+	glTranslatef(0.5,-0.5,0);
+	glScalef(2.0,0.2,0.4);
+	glutSolidCube(1);
+	glPopMatrix();
+
+	// Balls
+	glPushMatrix();
+	glColor4f(0,0,1,1);
+	glTranslatef(0.4,0.2,0);
+	glutSolidSphere(0.1,20,20);
+	glTranslatef(-0.8,0,0);
+	glutSolidSphere(0.1,20,20);
+	glPopMatrix();
+	// End Draw
+	glPopMatrix();
+}
+//   ▄█        ▄█     ▄██████▄     ▄█    █▄        ███     
+//  ███       ███    ███    ███   ███    ███   ▀█████████▄ 
+//  ███       ███▌   ███    █▀    ███    ███      ▀███▀▀██ 
+//  ███       ███▌  ▄███         ▄███▄▄▄▄███▄▄     ███   ▀ 
+//  ███       ███▌ ▀▀███ ████▄  ▀▀███▀▀▀▀███▀      ███     
+//  ███       ███    ███    ███   ███    ███       ███     
+//  ███▌    ▄ ███    ███    ███   ███    ███       ███     
+//  █████▄▄██ █▀     ████████▀    ███    █▀       ▄████▀   
+//  ▀
+void drawLight(){
+	glPushMatrix();
+	glTranslatef(lightPos.x,lightPos.y,lightPos.z);
+	glutSolidSphere(4,40,40);
+	glPopMatrix();
+}
+//  ████████▄   ███    █▄     ▄████████ ████████▄  
+//  ███    ███  ███    ███   ███    ███ ███   ▀███ 
+//  ███    ███  ███    ███   ███    ███ ███    ███ 
+//  ███    ███  ███    ███   ███    ███ ███    ███ 
+//  ███    ███  ███    ███ ▀███████████ ███    ███ 
+//  ███    ███  ███    ███   ███    ███ ███    ███ 
+//  ███  ▀ ███  ███    ███   ███    ███ ███   ▄███ 
+//   ▀██████▀▄█ ████████▀    ███    █▀  ████████▀  
+//                                                 
+void drawQuad(GLdouble winX, GLdouble winY,	GLdouble winZ){
+    // glEnable(GL_TEXTURE_2D);
+    int w = g_winWidth;
+    int h = g_winHeight;
+
+    //Convert to ortho
+    glMatrixMode( GL_PROJECTION );
+    glLoadIdentity();
+    glOrtho( 0, w, 0, h, -1, 1 );
+
+    glMatrixMode( GL_MODELVIEW );
+    glLoadIdentity();
+
+    glBegin( GL_QUADS );
+    glTexCoord2f(0,0);
+    glVertex2f(0,0);  
+    glTexCoord2f(1,0);
+    glVertex2f(w,0);  
+    glTexCoord2f(1,1);
+    glVertex2f(w,h); 
+    glTexCoord2f(0,1);
+    glVertex2f(0,h);  
+	glEnd();
+
+}
+/*
 // Draw function
 //
 void draw() {
@@ -170,7 +398,171 @@ void draw() {
 	// Queue the next frame to be drawn straight away
 	glutPostRedisplay();
 }
+*/
+//  ████████▄     ▄████████    ▄████████  ▄█     █▄  
+//  ███   ▀███   ███    ███   ███    ███ ███     ███ 
+//  ███    ███   ███    ███   ███    ███ ███     ███ 
+//  ███    ███  ▄███▄▄▄▄██▀   ███    ███ ███     ███ 
+//  ███    ███ ▀▀███▀▀▀▀▀   ▀███████████ ███     ███ 
+//  ███    ███ ▀███████████   ███    ███ ███     ███ 
+//  ███   ▄███   ███    ███   ███    ███ ███ ▄█▄ ███ 
+//  ████████▀    ███    ███   ███    █▀   ▀███▀███▀  
+//               ███    ███                          
+void draw() {
+	g_particleSystem->tick(1.f/60.f);
+	// Black background
+	// glClearColor(0.0f,0.0f,0.0f,1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	// Enable flags for normal rendering
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_NORMALIZE);
+	setUpCamera();
 
+	// DRAW TO FBO
+	glBindFramebuffer(GL_FRAMEBUFFER,FBO0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glUseProgram(g_occlusionShader);
+		glUniform1i(glGetUniformLocation(g_occlusionShader, "isLight"),1);
+		drawLight();
+		glUniform1i(glGetUniformLocation(g_occlusionShader, "isLight"),0);
+		// drawScene();
+		g_particleSystem->render();
+				glPushMatrix();
+			glRotatef(-90,1,0,0);
+			tree->draw(5);
+		glPopMatrix();
+		glUseProgram(0);
+	glBindFramebuffer(GL_FRAMEBUFFER,0);
+
+	// DRAW ON QUAD RADIAL BLUR EFFECT
+	glBindFramebuffer(GL_FRAMEBUFFER,FBO1);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		// Enable Drawing texures
+		glEnable(GL_TEXTURE_2D);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D,renderTexture0);//renderTexture, depthTexture, shadowMap
+	    glUseProgram(g_volumetricShader);
+	    // GET SCREEN SPACE COORDINATE OF LIGHT
+	    GLdouble winX = 0;
+	 	GLdouble winY = 0;
+	 	GLdouble winZ = 0;
+		GLdouble model_view[16];
+		glGetDoublev(GL_MODELVIEW_MATRIX, model_view);
+		GLdouble projection[16];
+		glGetDoublev(GL_PROJECTION_MATRIX, projection);
+		GLint viewport[4];
+		glGetIntegerv(GL_VIEWPORT, viewport);
+		gluProject(lightPos.x,lightPos.y,lightPos.z,model_view,projection,viewport,&winX,&winY,&winZ);
+		// cout << "winX: " << winX << "  winY: " << winY << "  winZ: " << winZ << endl;
+		GLdouble normalizedWinX = winX/float(g_winWidth);
+		GLdouble normalizedWinY = winY/float(g_winHeight);
+		GLdouble normalizedWinZ = winZ;
+		// cout << "normalizedWinX: " << normalizedWinX << "  normalizedWinY: " << normalizedWinY << "  winZ: " << winZ << endl;
+		glUniform3f(glGetUniformLocation(g_volumetricShader, "lPos"),normalizedWinX,normalizedWinY,normalizedWinZ);
+		drawQuad(normalizedWinX, normalizedWinY, normalizedWinZ);	
+		glUseProgram(0);
+		glDisable(GL_TEXTURE_2D);
+	glBindFramebuffer(GL_FRAMEBUFFER,0);
+
+	// 3 Passes of linear blur
+	// 1
+	glBindFramebuffer(GL_FRAMEBUFFER,FBO2);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D,renderTexture1);
+	    glUseProgram(g_blurShader);
+		glUniform1i(glGetUniformLocation(g_blurShader,"isVertical"),1);
+		glUniform2f(glGetUniformLocation(g_blurShader,"pixelSize"),1.0/float(g_winWidth),1.0/float(g_winHeight));
+		drawQuad(normalizedWinX, normalizedWinY, normalizedWinZ);	
+	glBindFramebuffer(GL_FRAMEBUFFER,0);
+	// 2
+	glBindFramebuffer(GL_FRAMEBUFFER,FBO2);
+		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderTexture1,0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D,renderTexture2);
+	    glUseProgram(g_blurShader);
+		glUniform1i(glGetUniformLocation(g_blurShader,"isVertical"),0);
+		glUniform2f(glGetUniformLocation(g_blurShader,"pixelSize"),1.0/float(g_winWidth),1.0/float(g_winHeight));
+		drawQuad(normalizedWinX, normalizedWinY, normalizedWinZ);	
+	glBindFramebuffer(GL_FRAMEBUFFER,0);
+	// 3
+	glBindFramebuffer(GL_FRAMEBUFFER,FBO2);
+		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderTexture2,0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D,renderTexture1);
+	    glUseProgram(g_blurShader);
+		glUniform1i(glGetUniformLocation(g_blurShader,"isVertical"),1);
+		glUniform2f(glGetUniformLocation(g_blurShader,"pixelSize"),1.0/float(g_winWidth),1.0/float(g_winHeight));
+		drawQuad(normalizedWinX, normalizedWinY, normalizedWinZ);	
+	glBindFramebuffer(GL_FRAMEBUFFER,0);
+
+	glBindFramebuffer(GL_FRAMEBUFFER,FBO2);
+		setUpCamera();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderTexture0,0);
+	    glUseProgram(g_fongShader);
+		GLfloat ambient[] = { 0.20, 0.0, 0.0, 1.0 };
+		GLfloat diffuse[] = { 0.5, 0.0, 0.0};
+		GLfloat specular[] = {0.7, 0.6, 0.6};
+		GLfloat shininess = 128.0f * 0.25f;
+		glMaterialfv(GL_FRONT, GL_AMBIENT, ambient);
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
+		glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
+		glMaterialf(GL_FRONT, GL_SHININESS, shininess);
+		g_particleSystem->render();
+		glPushMatrix();
+			glRotatef(-90,1,0,0);
+			tree->draw(5);
+		glPopMatrix();
+		glUseProgram(0);
+	glBindFramebuffer(GL_FRAMEBUFFER,0);
+
+	// Final draw scene to quad
+	glEnable(GL_TEXTURE_2D);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    glUseProgram(g_twoTexShader);
+	glUniform2f(glGetUniformLocation(g_twoTexShader, "lightPos"),normalizedWinX,normalizedWinY);
+	
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D,renderTexture0);//renderTexture, depthTexture, shadowMap
+    glUniform1i(glGetUniformLocation(g_twoTexShader, "texture0"), 0);
+   
+    glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D,renderTexture1);//renderTexture, depthTexture, shadowMap
+    glUniform1i(glGetUniformLocation(g_twoTexShader, "texture1"), 1);
+	
+    glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D,renderTexture2);//renderTexture, depthTexture, shadowMap
+    glUniform1i(glGetUniformLocation(g_twoTexShader, "texture2"), 2);
+
+	drawQuad(normalizedWinX, normalizedWinY, normalizedWinZ);
+	glUseProgram(0);
+
+	// Move the buffer we just drew to the front
+	glutSwapBuffers();
+	// Queue the next frame to be drawn straight away
+	glutPostRedisplay();
+}
+//  ███    █▄      ███      ▄█   ▄█       
+//  ███    ███ ▀█████████▄ ███  ███       
+//  ███    ███    ▀███▀▀██ ███▌ ███       
+//  ███    ███     ███   ▀ ███▌ ███       
+//  ███    ███     ███     ███▌ ███       
+//  ███    ███     ███     ███  ███       
+//  ███    ███     ███     ███  ███▌    ▄ 
+//  ████████▀     ▄████▀   █▀   █████▄▄██ 
+//                              ▀         
+void reshape(int w, int h) {
+    if (h == 0) h = 1;
+	g_winWidth = w;
+	g_winHeight = h;
+    glViewport(0, 0, g_winWidth, g_winHeight);  
+}
+/*
 // Reshape function
 // 
 void reshape(int w, int h) {
@@ -182,7 +574,53 @@ void reshape(int w, int h) {
     // Sets the openGL rendering window to match the window size
     glViewport(0, 0, g_winWidth, g_winHeight);  
 }
-
+*/
+//   ▄█  ███▄▄▄▄      ▄███████▄ ███    █▄      ███     
+//  ███  ███▀▀▀██▄   ███    ███ ███    ███ ▀█████████▄ 
+//  ███▌ ███   ███   ███    ███ ███    ███    ▀███▀▀██ 
+//  ███▌ ███   ███   ███    ███ ███    ███     ███   ▀ 
+//  ███▌ ███   ███ ▀█████████▀  ███    ███     ███     
+//  ███  ███   ███   ███        ███    ███     ███     
+//  ███  ███   ███   ███        ███    ███     ███     
+//  █▀    ▀█   █▀   ▄████▀      ████████▀     ▄████▀   
+//                                                     
+void keyboardCallback(unsigned char key, int x, int y) {
+	// cout << "Keyboard Callback :: key=" << key << ", x,y=(" << x << "," << y << ")" << endl;
+		switch(key){
+		case 'w': // left mouse button
+			lightPos.y-=0.5; break;
+		case 'a': // right mouse button
+			lightPos.x-=0.5; break;
+		case 's': // scroll foward/up
+			lightPos.y+=0.5;break;
+		case 'd': // scroll back/down
+			lightPos.x+=0.5;break;
+		}
+}
+void specialCallback(int key, int x, int y) {
+	// cout << "Special Callback :: key=" << key << ", x,y=(" << x << "," << y << ")" << endl;
+}
+void mouseCallback(int button, int state, int x, int y) {
+	// cout << "Mouse Callback :: button=" << button << ", state=" << state << ", x,y=(" << x << "," << y << ")" << endl;
+	switch(button){
+		case 0: // left mouse button
+			g_mouseDown = (state==0); g_mousePos = vec2(x, y); break;
+		case 2: // right mouse button
+			if (state==0)g_useShader = !g_useShader; break;
+		case 3: // scroll foward/up
+			g_zoomFactor /= 1.1;break;
+		case 4: // scroll back/down
+			g_zoomFactor *= 1.1;break;
+}}
+void mouseMotionCallback(int x, int y) {
+	// cout << "Mouse Motion Callback :: x,y=(" << x << "," << y << ")" << endl;
+	if (g_mouseDown) {
+		vec2 dif = vec2(x,y) - g_mousePos;
+		g_mousePos = vec2(x,y);
+		g_yRotation += 0.3 * dif.x;
+		g_xRotation += 0.3 * dif.y;
+}}
+/*
 // Keyboard callback
 // Called once per button state change
 //
@@ -245,7 +683,8 @@ void mouseMotionCallback(int x, int y) {
 		g_xRotation += 0.3 * dif.y;
 	}
 }
-
+*/
+/*
 //Main program
 // 
 int main(int argc, char **argv) {
@@ -313,5 +752,60 @@ int main(int argc, char **argv) {
 	// Don't forget to delete all pointers that we made
 	delete g_geometries;
 	delete g_lights;
+	return 0;
+}
+*/
+
+//     ▄▄▄▄███▄▄▄▄      ▄████████  ▄█  ███▄▄▄▄   
+//   ▄██▀▀▀███▀▀▀██▄   ███    ███ ███  ███▀▀▀██▄ 
+//   ███   ███   ███   ███    ███ ███▌ ███   ███ 
+//   ███   ███   ███   ███    ███ ███▌ ███   ███ 
+//   ███   ███   ███ ▀███████████ ███▌ ███   ███ 
+//   ███   ███   ███   ███    ███ ███  ███   ███ 
+//   ███   ███   ███   ███    ███ ███  ███   ███ 
+//    ▀█   ███   █▀    ███    █▀  █▀    ▀█   █▀  
+//                                               
+int main(int argc, char **argv) {
+	if(argc != 1){
+		cout << "No arguments expected" << endl;
+		exit(EXIT_FAILURE);
+	}
+	// Initialise GL, GLU and GLUT
+	glutInit(&argc, argv);
+	// Setting up the display
+	// - RGB color model + Alpha Channel = GLUT_RGBA
+	// - Double buffered = GLUT_DOUBLE
+	// - Depth buffer = GLUT_DEPTH
+	glutInitDisplayMode(GLUT_RGBA|GLUT_DOUBLE|GLUT_DEPTH);
+	// Initialise window size and create window
+	glutInitWindowSize(g_winWidth, g_winHeight);
+	g_mainWindow = glutCreateWindow("COMP308 Assignment 3");
+	// Initilise GLEW
+	// must be done after creating GL context (glutCreateWindow in this case)
+	GLenum err = glewInit();
+	if (GLEW_OK != err) { // Problem: glewInit failed, something is seriously wrong.
+		cerr << "Error: " << glewGetErrorString(err) << endl;
+		abort(); // Unrecoverable error
+	}
+	cout << "Using OpenGL " << glGetString(GL_VERSION) << endl;
+	cout << "Using GLEW " << glewGetString(GLEW_VERSION) << endl;
+	// Register functions for callback
+	glutDisplayFunc(draw);
+	glutReshapeFunc(reshape);
+	glutKeyboardFunc(keyboardCallback);
+	glutSpecialFunc(specialCallback);
+	glutMouseFunc(mouseCallback);
+	glutMotionFunc(mouseMotionCallback);
+	initLight();
+	initShader();
+	initTexture();
+	init();
+
+	g_lights = new Lights();
+	g_particleSystem = new SwarmParticleSystem(200, 6);
+	g_particleSystem->create();
+
+	glutMainLoop();
+	// Don't forget to delete all pointers that we made
 	return 0;
 }

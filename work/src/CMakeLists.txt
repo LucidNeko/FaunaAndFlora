@@ -20,6 +20,7 @@ SET(headers
 	"particleConstraintAngle.hpp"
 	"particleConstraintPlane.hpp"
 	"OBJLoader.hpp"
+	"lsystemtree.hpp"
 )
 
 
@@ -31,6 +32,7 @@ SET(sources
 	"lights.cpp"	
 	"particleSystem.cpp"
 	"OBJLoader.cpp"
+	"lsystemtree.cpp"
 )
 
 # Add executable target and link libraries
