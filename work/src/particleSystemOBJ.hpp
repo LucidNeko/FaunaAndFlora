@@ -102,7 +102,7 @@ public:
 
 		for(uint i = 0; i < m_particleCount-1; i++) {
 			float *particle = &m_particles[i*NUM_COMPONENTS];
-			if(particle[1] == 0) {
+			if(particle[1] >= -0.1f) {
 				m_constraints.push_back(new ParticleConstraintPin(particle));
 			} else {
 				m_constraints.push_back(new Wind(particle, m_wind, 0.005f));

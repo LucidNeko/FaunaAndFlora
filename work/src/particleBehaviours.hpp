@@ -160,6 +160,11 @@ public:
 
 	//solve returns true if this constraint should be deleted
 	bool solve() {
+		//kill off from time
+		if(m_lifetime != 0 && m_time >= m_lifetime) {
+			return true;
+		}
+
 		//difference
 		float dx = m_b[0] - m_a[0];
 		float dy = m_b[1] - m_a[1];

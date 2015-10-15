@@ -120,6 +120,7 @@ void ParticleSystem::integrateParticles(float delta) {
 
 void ParticleSystem::solveConstraints(float delta) {
 	for(uint i = 0; i < m_constraints.size(); i++) {
+		m_constraints[i]->tick(delta/m_constraintIterations);
 		if(m_constraints[i]->solve()) {
 			m_constraints.erase(m_constraints.begin() + i);
 		}

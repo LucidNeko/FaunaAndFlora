@@ -63,6 +63,9 @@ GLuint g_twoTexShader = 0;
 GLuint g_blurShader = 0;
 GLuint g_fongShader = 0;
 GLuint g_texFongShader = 0;
+bool g_IsCubemapeEnabled = false;
+GLuint g_shaderCubemap = 0;
+GLuint g_cubemap = 0;
 float *g_lightParticle = nullptr;
 vec3 lightPos = vec3(10.0,05.5,-30);
 vec3 lightDir = vec3(0.0f, -1.0f, 0.0f);
@@ -169,6 +172,7 @@ void initShader() {
 	g_blurShader = makeShaderProgram("work/res/shaders/blurShader.vert", "work/res/shaders/blurShader.frag");
 	g_fongShader = makeShaderProgram("work/res/shaders/fongShader.vert", "work/res/shaders/fongShader.frag");
 	g_texFongShader = makeShaderProgram("work/res/shaders/texFongShader.vert", "work/res/shaders/texFongShader.frag");
+	g_shaderCubemap = makeShaderProgram("work/res/shaders/shaderCubemap.vert", "work/res/shaders/shaderCubemap.frag");
 }
 unsigned int createTexture(int w,int h,bool isDepth=false){
 	unsigned int textureId;
@@ -243,6 +247,118 @@ void init(){
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
 }
+
+void initCubemap(string fname, string ext, GLuint *pointer, GLenum texSlot) {
+	image PX(fname + "PX." + ext);
+	image NX(fname + "NX." + ext);
+	image PY(fname + "PY." + ext);
+	image NY(fname + "NY." + ext);
+	image PZ(fname + "PZ." + ext);
+	image NZ(fname + "NZ." + ext);
+
+	glActiveTexture(texSlot);
+	glGenTextures(1, pointer);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, *pointer);
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);  
+
+	GLuint i = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+	glTexImage2D(i++, 0, PX.glFormat(), PX.w, PX.h, 0, PX.glFormat(), GL_UNSIGNED_BYTE, PX.dataPointer());
+	glTexImage2D(i++, 0, NX.glFormat(), NX.w, NX.h, 0, NX.glFormat(), GL_UNSIGNED_BYTE, NX.dataPointer());
+	glTexImage2D(i++, 0, PY.glFormat(), PY.w, PY.h, 0, PY.glFormat(), GL_UNSIGNED_BYTE, PY.dataPointer());
+	glTexImage2D(i++, 0, NY.glFormat(), NY.w, NY.h, 0, NY.glFormat(), GL_UNSIGNED_BYTE, NY.dataPointer());
+	glTexImage2D(i++, 0, PZ.glFormat(), PZ.w, PZ.h, 0, PZ.glFormat(), GL_UNSIGNED_BYTE, PZ.dataPointer());
+	glTexImage2D(i++, 0, NZ.glFormat(), NZ.w, NZ.h, 0, NZ.glFormat(), GL_UNSIGNED_BYTE, NZ.dataPointer());
+}
+
+void drawSkybox() {
+	GLfloat skyboxVertices[] = {
+	    // Positions          
+	    -1.0f,  1.0f, -1.0f,
+	    -1.0f, -1.0f, -1.0f,
+	     1.0f, -1.0f, -1.0f,
+	     1.0f, -1.0f, -1.0f,
+	     1.0f,  1.0f, -1.0f,
+	    -1.0f,  1.0f, -1.0f,
+
+	    -1.0f, -1.0f,  1.0f,
+	    -1.0f, -1.0f, -1.0f,
+	    -1.0f,  1.0f, -1.0f,
+	    -1.0f,  1.0f, -1.0f,
+	    -1.0f,  1.0f,  1.0f,
+	    -1.0f, -1.0f,  1.0f,
+
+	     1.0f, -1.0f, -1.0f,
+	     1.0f, -1.0f,  1.0f,
+	     1.0f,  1.0f,  1.0f,
+	     1.0f,  1.0f,  1.0f,
+	     1.0f,  1.0f, -1.0f,
+	     1.0f, -1.0f, -1.0f,
+
+	    -1.0f, -1.0f,  1.0f,
+	    -1.0f,  1.0f,  1.0f,
+	     1.0f,  1.0f,  1.0f,
+	     1.0f,  1.0f,  1.0f,
+	     1.0f, -1.0f,  1.0f,
+	    -1.0f, -1.0f,  1.0f,
+
+	    -1.0f,  1.0f, -1.0f,
+	     1.0f,  1.0f, -1.0f,
+	     1.0f,  1.0f,  1.0f,
+	     1.0f,  1.0f,  1.0f,
+	    -1.0f,  1.0f,  1.0f,
+	    -1.0f,  1.0f, -1.0f,
+
+	    -1.0f, -1.0f, -1.0f,
+	    -1.0f, -1.0f,  1.0f,
+	     1.0f, -1.0f, -1.0f,
+	     1.0f, -1.0f, -1.0f,
+	    -1.0f, -1.0f,  1.0f,
+	     1.0f, -1.0f,  1.0f
+	};
+
+	glPushMatrix();
+
+		glDepthMask(GL_FALSE);
+		glUseProgram(g_shaderCubemap);
+
+		glActiveTexture(GL_TEXTURE0);
+		glUniform1i(glGetUniformLocation(g_shaderCubemap, "skybox"), 0);
+
+		// glBindVertexArray(skyboxVertices);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, g_cubemap);
+		// glDrawArrays(GL_TRIANGLES, 0, 36);
+		// glBindVertexArray(0);
+		
+		// Set up the projection matrix
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		gluPerspective(g_fovy*g_zoomFactor, float(g_winWidth) / float(g_winHeight), g_znear, g_zfar);
+
+		// Set up the view part of the model view matrix
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+
+		// glTranslatef(0, 0, -50 * g_zoomFactor);
+		glRotatef(g_xRotation, 1, 0, 0);
+		glRotatef(g_yRotation, 0, 1, 0);
+
+		glBegin(GL_TRIANGLES);
+			for(uint i = 0; i < 36*3; i+=3) {
+				glVertex3f(skyboxVertices[i],
+						   skyboxVertices[i+1], 
+						   skyboxVertices[i+2]);
+			}
+		glEnd();
+
+		glDepthMask(GL_TRUE);
+	glPopMatrix();
+}
+
 //   ▄████████    ▄████████   ▄▄▄▄███▄▄▄▄      ▄████████    ▄████████    ▄████████ 
 //  ███    ███   ███    ███ ▄██▀▀▀███▀▀▀██▄   ███    ███   ███    ███   ███    ███ 
 //  ███    █▀    ███    ███ ███   ███   ███   ███    █▀    ███    ███   ███    ███ 
@@ -396,6 +512,9 @@ void draw() {
 	// glClearColor(0.0f,0.0f,0.0f,1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
+	
+
 	// Enable flags for normal rendering
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
@@ -485,10 +604,15 @@ void draw() {
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER,FBO2);
+
 		setUpCamera();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderTexture0,0);
 // START COLOR DRAW		
+		if(g_IsCubemapeEnabled) {
+			drawSkybox();
+		}
+
 	    glUseProgram(g_fongShader);
 		GLfloat ambient[] = { 0.20, 0.0, 0.0, 1.0 };
 		GLfloat diffuse[] = { 0.5, 0.0, 0.0};
@@ -604,6 +728,8 @@ void keyboardCallback(unsigned char key, int x, int y) {
 			g_growthSpeed -= 0.01f; break;
 		case 'p' :
 			g_growthSpeed += 0.01f; break;
+		case 'c' :
+			g_IsCubemapeEnabled = !g_IsCubemapeEnabled; break;
 		case '1': // 
 			volLightCol.x = max(volLightCol.x-0.1f, 0.0f);break;
 		case '2': // 
@@ -700,6 +826,8 @@ int main(int argc, char **argv) {
 
 	g_particleSystemOBJ = new OBJParticleSystem(g_cloth, 1000, 4);
 	g_particleSystemOBJ->create();
+
+	initCubemap("work/res/assets/ocean/ocean", "jpg", &g_cubemap, GL_TEXTURE2);
 
 	glutMainLoop();
 	// Don't forget to delete all pointers that we made
