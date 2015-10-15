@@ -26,6 +26,19 @@ public:
 
 		m_restingDistance = sqrt(dx*dx + dy*dy + dz*dz);
 		m_softness = softness;
+	}
+
+	ParticleConstraintDistance(float *a, float *b, float softness, bool fragile) {
+		m_a = a;
+		m_b = b;
+
+		float dx = m_a[0] - m_b[0];
+		float dy = m_a[1] - m_b[1];
+		float dz = m_a[2] - m_b[2];
+
+		m_restingDistance = sqrt(dx*dx + dy*dy + dz*dz);
+		m_softness = softness;
+		m_isFragile = fragile;
 	}	
 
 	ParticleConstraintDistance(float *a, float *b, float restingDistance, float softness) {
@@ -35,7 +48,7 @@ public:
 		m_softness = softness;
 	}
 
-		ParticleConstraintDistance(float *a, float *b, float restingDistance, float softness, bool fragile) {
+	ParticleConstraintDistance(float *a, float *b, float restingDistance, float softness, bool fragile) {
 		m_a = a;
 		m_b = b;
 		m_restingDistance = restingDistance;

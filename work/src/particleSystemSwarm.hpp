@@ -21,7 +21,9 @@ private:
 	float *m_pin;
 
 	IRenderable *bee;
-	vector<IRenderable *> m_renderables;
+	IRenderable *leftWing;
+	IRenderable *rightWing;
+	vector<GameObject *> m_renderables;
 public:
 	SwarmParticleSystem(uint maxParticles, uint constraintIterations) : ParticleSystem(maxParticles, constraintIterations) {
 
@@ -37,15 +39,22 @@ public:
 						   -5 + (rand()/(double(RAND_MAX) + 1))*10,
 						   -5 + (rand()/(double(RAND_MAX) + 1))*10, &p);
 
-			m_constraints.push_back(new Move(p, 0.001f));
+			m_constraints.push_back(new Move(p, 0.005f));
 		}
 
 
 		//create bees //1 so skip pin
 		bee = new OBJLoader("work/res/assets/bee/bee_body.obj");
+		leftWing = new OBJLoader("work/res/assets/bee/bee_leftWing.obj");
+		rightWing = new OBJLoader("work/res/assets/bee/bee_rightWing.obj");
+		
 
 		for(uint i = 1; i < m_particleCount; i++) {
-			IRenderable *renderable = new GameObject(&m_particles[i*NUM_COMPONENTS], bee);
+			GameObject *renderable = new GameObject(&m_particles[i*NUM_COMPONENTS], bee);
+			GameObject *lw = new GameObject(nullptr, leftWing);
+			GameObject *rw = new GameObject(nullptr, rightWing);
+			renderable->addChild(lw);
+			renderable->addChild(rw);
 			m_renderables.push_back(renderable);
 		}
 
@@ -75,8 +84,8 @@ public:
 		for(uint i = 0; i < m_particleCount-1; i++) {
 			float *a = &m_particles[i*NUM_COMPONENTS];
 
-			if(sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2]) > 10) {
-				m_constraints.push_back(new Attraction(a, m_pin, 0.000001f, 9.99f));
+			if(sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2]) > 2) {
+				m_constraints.push_back(new Attraction(a, m_pin, 0.000001f, 1.99f));
 			}
 		}
 
@@ -96,8 +105,13 @@ public:
 	}
 
 	void render() {
+		glPushMatrix();
+		glTranslatef(0,3,0);
+		glScalef(0.3f, 0.3f, 0.3f);
 		for(uint i = 0; i < m_renderables.size(); i++) {
+			m_renderables[i]->tick(0.1f);
 			m_renderables[i]->render();
 		}	
+		glPopMatrix();
 	}
 };

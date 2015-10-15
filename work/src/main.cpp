@@ -26,6 +26,7 @@
 #include "particleSystemBasic.hpp"
 #include "particleSystemSwarm.hpp"
 #include "particleSystemOBJ.hpp"
+#include "particleSystemRope.hpp"
 #include "OBJLoader.hpp"
 #include "lsystemtree.hpp"
 
@@ -85,6 +86,7 @@ unsigned int renderTexture3,depthTexture3;
 // Particles
 ParticleSystem *g_particleSystem = nullptr;
 ParticleSystem *g_particleSystemOBJ = nullptr;
+ParticleSystem *g_particleSystemRope = nullptr;
 GLuint g_mrtShader = 0;
 OBJLoader *g_objLoader = nullptr;
 LSystem *tree = new LSystem("P:I+[P+F]--//[--L]I[++L]-[PF]++PF "
@@ -238,7 +240,7 @@ void setUpCamera() {
 	gluPerspective(g_fovy * g_zoomFactor, float(g_winWidth) / float(g_winHeight), g_znear, g_zfar);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0, 0, -10);
+	glTranslatef(0, -1.5f, -10);
 	glRotatef(g_xRotation, 1, 0, 0);
 	glRotatef(g_yRotation, 0, 1, 0);
 }
@@ -362,6 +364,7 @@ void draw() {
 	// TICK METHODS
 	tree->tick();
 	g_particleSystem->tick(1.f/60.f);
+	g_particleSystemRope->tick(1.f/60.f);
 
 	// UPDATE LIGHT POS
 	if (g_lightParticle != nullptr){
@@ -477,6 +480,10 @@ void draw() {
 		glPopMatrix();
 		glUseProgram(0);
 
+		glUseProgram(g_fongShader);
+		g_particleSystemRope->render();
+		glUseProgram(0);
+
 		glUseProgram(g_texFongShader);
 		glBindTexture(GL_TEXTURE_2D,g_beeTexture);
 		g_particleSystem->render();
@@ -539,17 +546,17 @@ void keyboardCallback(unsigned char key, int x, int y) {
 	// cout << "Keyboard Callback :: key=" << key << ", x,y=(" << x << "," << y << ")" << endl;
 		switch(key){
 		case 'w': // 
-			lightPos.y-=0.5; break;
+			g_lightParticle[1]-=0.5; break;
 		case 'a': // 
-			lightPos.x-=0.5; break;
+			g_lightParticle[0]-=0.5; break;
 		case 's': // 
-			lightPos.y+=0.5;break;
+			g_lightParticle[1]+=0.5;break;
 		case 'd': // 
-			lightPos.x+=0.5;break;
+			g_lightParticle[0]+=0.5;break;
 		case 'q': // 
-			lightPos.z+=0.5;break;
+			g_lightParticle[2]+=0.5;break;
 		case 'e': // 
-			lightPos.z-=0.5;break;
+			g_lightParticle[2]-=0.5;break;
 		case '1': // 
 			volLightCol.x = max(volLightCol.x-0.1f, 0.0f);break;
 		case '2': // 
@@ -635,6 +642,9 @@ int main(int argc, char **argv) {
 	g_lights = new Lights();
 	g_particleSystem = new SwarmParticleSystem(200, 6);
 	g_particleSystem->create();
+
+	g_particleSystemRope = new RopeParticleSystem(50, 6);
+	g_particleSystemRope->create();
 
 	glutMainLoop();
 	// Don't forget to delete all pointers that we made

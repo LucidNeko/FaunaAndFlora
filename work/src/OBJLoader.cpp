@@ -193,9 +193,9 @@ void OBJLoader::render() {
 		vec3 cn = m_normals[t.v[2].n];
 
 		//uv
-		vec2 auv = m_uvs[t.v[0].t] * 5;
-		vec2 buv = m_uvs[t.v[1].t] * 5;
-		vec2 cuv = m_uvs[t.v[2].t] * 5;
+		vec2 auv = m_uvs[t.v[0].t]*5;
+		vec2 buv = m_uvs[t.v[1].t]*5;
+		vec2 cuv = m_uvs[t.v[2].t]*5;
 
 		glNormal3f(an.x, an.y, an.z);
 		glTexCoord2f(auv.x, auv.y);
