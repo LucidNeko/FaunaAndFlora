@@ -23,9 +23,10 @@ varying vec3 vPosition;
 varying vec2 vTextureCoord0;
 
 uniform int isLight;
+uniform vec3 lightColor;
 
 void main() {
-	gl_FragColor = isLight==1 ? vec4(0.5,0.5,0.5,1) : vec4(0,0,0,1);		
+	gl_FragColor = isLight==1 ? vec4(lightColor,1) : vec4(0,0,0,1);		
 	// gl_FragColor = isLight==1 ? vec4(1,1,1,1) : vec4(0.1,0.67,0.19,0.2);	
 	if (isLight==3) gl_FragColor = vec4(0.8,0.67,0.19,0.2);
 }

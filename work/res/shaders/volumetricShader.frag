@@ -24,7 +24,7 @@ varying vec2 vTextureCoord0;
 varying vec3 vLight;
 
 varying vec4 lightPos;
-const int Quality = 128;
+const int Quality = 64;
 // uniform vec3 lPos;
 // uniform vec3 l_Pos;
 
@@ -45,7 +45,7 @@ vec2 radial_origin = vLight.xy;
 vec2 radial_size = vec2(0.0,0.0);    // texel size
  
 float radial_blur = 0.8;   // blur factor
-float radial_bright = 0.1; // bright factor
+float radial_bright = 0.2; // bright factor
 
   vec2 TexCoord = vTextureCoord0;
  
