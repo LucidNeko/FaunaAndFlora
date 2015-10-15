@@ -85,7 +85,8 @@ class Ground: public ParticleConstraint {
 private:
 	float *m_particle;
 	float m_minY = -9.9f;
-	float m_maxY = -11.5f;
+	//float m_maxY = -11.5f; //fly out through hanging cloth
+	float m_maxY = -13.5f;
 	float box = 3.5f * 1.75f; //1.667f because scale of cloth
 public:
 	Ground(float *particle) {

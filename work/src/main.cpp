@@ -48,7 +48,7 @@ bool g_mouseDown = false;
 vec2 g_mousePos;
 float g_yRotation = 0;
 float g_xRotation = 0;
-float g_zoomFactor = 1.4641;
+float g_zoomFactor = 1.771561;
 
 // Scene information
 GLuint g_texture = 0;
@@ -94,6 +94,13 @@ ParticleSystem *g_particleSystemOBJ = nullptr;
 ParticleSystem *g_particleSystemRope = nullptr;
 OBJLoader *g_table = nullptr;
 OBJLoader *g_cloth = nullptr;
+
+bool g_controlQ = false;
+bool g_controlW = false;
+bool g_controlE = false;
+bool g_controlA = false;
+bool g_controlS = false;
+bool g_controlD = false;
 
 float g_growthSpeed = 0.025f;
 
@@ -496,6 +503,27 @@ void drawQuad(GLdouble winX, GLdouble winY,	GLdouble winZ){
 //  ████████▀    ███    ███   ███    █▀   ▀███▀███▀  
 //               ███    ███                          
 void draw() {
+	//move lightsource
+	float m_speed = 1.f;
+	if(g_controlA) {
+		g_lightParticle[0] -= m_speed;	
+	} 
+	if(g_controlD) {
+		g_lightParticle[0] += m_speed;	
+	} 
+	if(g_controlW) {
+		g_lightParticle[1] += m_speed;	
+	} 
+	if(g_controlS) {
+		g_lightParticle[1] -= m_speed;	
+	} 
+	if(g_controlQ) {
+		g_lightParticle[2] += m_speed;	
+	} 
+	if(g_controlE) {
+		g_lightParticle[2] -= m_speed;	
+	} 
+
 	// TICK METHODS
 	tree->tick();
 	g_particleSystem->tick(1.f/60.f);
@@ -714,17 +742,17 @@ void keyboardCallback(unsigned char key, int x, int y) {
 	// cout << "Keyboard Callback :: key=" << key << ", x,y=(" << x << "," << y << ")" << endl;
 		switch(key){
 		case 'w': // 
-			g_lightParticle[1]+=0.5; break;
+			g_controlW = true; break;
 		case 'a': // 
-			g_lightParticle[0]-=0.5; break;
+			g_controlA = true; break;
 		case 's': // 
-			g_lightParticle[1]-=0.5;break;
+			g_controlS = true; break;
 		case 'd': // 
-			g_lightParticle[0]+=0.5;break;
+			g_controlD = true; break;
 		case 'q': // 
-			g_lightParticle[2]+=0.5;break;
+			g_controlQ = true; break;
 		case 'e': // 
-			g_lightParticle[2]-=0.5;break;
+			g_controlE = true; break;
 		case 'o' :
 			g_growthSpeed -= 0.01f; break;
 		case 'p' :
@@ -753,6 +781,22 @@ void keyboardCallback(unsigned char key, int x, int y) {
 		case '6': // 
 			volLightCol.z = min(volLightCol.z+0.1f, 1.0f);break;															
 		}
+}
+void keyboardUpCallback(unsigned char key, int x, int y) {
+	switch(key){
+		case 'w': // 
+			g_controlW = false; break;
+		case 'a': // 
+			g_controlA = false; break;
+		case 's': // 
+			g_controlS = false; break;
+		case 'd': // 
+			g_controlD = false; break;
+		case 'q': // 
+			g_controlQ = false; break;
+		case 'e': // 
+			g_controlE = false; break;
+	}
 }
 void specialCallback(int key, int x, int y) {
 	// cout << "Special Callback :: key=" << key << ", x,y=(" << x << "," << y << ")" << endl;
@@ -814,6 +858,7 @@ int main(int argc, char **argv) {
 	glutDisplayFunc(draw);
 	glutReshapeFunc(reshape);
 	glutKeyboardFunc(keyboardCallback);
+	glutKeyboardUpFunc(keyboardUpCallback);
 	glutSpecialFunc(specialCallback);
 	glutMouseFunc(mouseCallback);
 	glutMotionFunc(mouseMotionCallback);
@@ -829,7 +874,7 @@ int main(int argc, char **argv) {
 	g_particleSystemRope = new RopeParticleSystem(50, 6);
 	g_particleSystemRope->create();
 
-	g_table = new OBJLoader("work/res/assets/table/tableStand.obj");
+	g_table = new OBJLoader("work/res/assets/table/tableStand_115.obj");
 	g_cloth = new OBJLoader("work/res/assets/table/tableCloth_v2_short_joined.obj");
 	// g_table->setScale(0.075f);
 	// g_cloth->setScale(0.075f);
@@ -839,7 +884,7 @@ int main(int argc, char **argv) {
 	g_particleSystemOBJ = new OBJParticleSystem(g_cloth, 1000, 4);
 	g_particleSystemOBJ->create();
 
-	initCubemap("work/res/assets/ocean/ocean", "jpg", &g_cubemap, GL_TEXTURE2);
+	initCubemap("work/res/assets/ocean/", "jpg", &g_cubemap, GL_TEXTURE2);
 
 	glutMainLoop();
 	// Don't forget to delete all pointers that we made
