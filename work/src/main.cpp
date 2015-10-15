@@ -101,6 +101,7 @@ bool g_controlE = false;
 bool g_controlA = false;
 bool g_controlS = false;
 bool g_controlD = false;
+bool g_viewRope = false;
 
 float g_growthSpeed = 0.025f;
 
@@ -382,7 +383,7 @@ void setUpCamera() {
 	gluPerspective(g_fovy * g_zoomFactor, float(g_winWidth) / float(g_winHeight), g_znear, g_zfar);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0, -1.5f, -10);
+	glTranslatef(0, -1.5f, -10* g_zoomFactor);
 	glRotatef(g_xRotation, 1, 0, 0);
 	glRotatef(g_yRotation, 0, 1, 0);
 }
@@ -659,7 +660,7 @@ void draw() {
 		glUseProgram(0);
 
 		glUseProgram(g_fongShader);
-		g_particleSystemRope->render();
+		if (g_viewRope) g_particleSystemRope->render();
 		
 		//render cloth
 		GLfloat ambient2[] = { 0.20, 0.2, 0.2, 1.0 };
@@ -796,6 +797,8 @@ void keyboardUpCallback(unsigned char key, int x, int y) {
 			g_controlQ = false; break;
 		case 'e': // 
 			g_controlE = false; break;
+		case 'l': // 
+			g_viewRope = !g_viewRope; break;			
 	}
 }
 void specialCallback(int key, int x, int y) {

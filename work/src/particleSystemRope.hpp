@@ -44,9 +44,9 @@ public:
 		createParticle(baseX, baseY, baseZ, &m_pin);
 		m_constraints.push_back(new ParticleConstraintPin(m_pin));
 
-		for(uint i = 0; i < 20; i++) {
+		for(uint i = 0; i < 25; i++) {
 			float *p;
-			createParticle(baseX, baseY - i*(height/20), baseZ, &p);
+			createParticle(baseX, baseY - i*(height/25), baseZ, &p);
 
 			g_lightParticle = p;
 
