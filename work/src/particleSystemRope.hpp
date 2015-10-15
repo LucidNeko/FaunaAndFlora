@@ -54,8 +54,6 @@ public:
 			m_constraints.push_back(new ParticleConstraintDistance(p_before, p, 0.3f, false));
 		}
 
-		// g_lightParticle[0] = -0.01f;
-
 		cout << "Created " << m_particleCount << " particles." << endl;
 	}
 
