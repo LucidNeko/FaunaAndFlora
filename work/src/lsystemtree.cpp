@@ -7,6 +7,8 @@
 
 using namespace std;
 
+extern float g_growthSpeed;
+
 void forwarddraw(LSystem*);
 
 GLfloat mats[][3][4] = {{{0.1,0.18725,0.1745,1.0},{0.396,0.74151,0.69102,1.0},{0.297254,0.30829,0.306678,1.0}},//0: turquoise
@@ -99,7 +101,8 @@ void LSystem::tick(){
     counter += 0.02;
     theta = original_theta + sin(counter);
     radtheta = (theta*PI)/180.0;
-    if(fwdlen<maxfwdlen)fwdlen += 0.11;
+    g_growthSpeed = g_growthSpeed < 0 ? 0 : g_growthSpeed > maxfwdlen ? maxfwdlen : g_growthSpeed;
+    if(fwdlen<maxfwdlen)fwdlen += g_growthSpeed;
     else{
         fwdlen = 0.0;
         grownbranchcount++;

@@ -22,6 +22,7 @@ class OBJLoader : public IRenderable {
 private:
 	std::string m_fname;
 	
+	float m_scale = 1.f;
 
 	void readOBJ(std::string fname);
 	void createNormals();
@@ -34,6 +35,10 @@ public:
 	std::vector<obj_triangle> m_triangles;
 
 	OBJLoader(std::string fname);
+
+	void setScale(float scale) {
+		m_scale = scale;
+	};
 
 	virtual void render();
 };

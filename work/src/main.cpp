@@ -87,6 +87,11 @@ unsigned int renderTexture3,depthTexture3;
 ParticleSystem *g_particleSystem = nullptr;
 ParticleSystem *g_particleSystemOBJ = nullptr;
 ParticleSystem *g_particleSystemRope = nullptr;
+OBJLoader *g_table = nullptr;
+OBJLoader *g_cloth = nullptr;
+
+float g_growthSpeed = 0.025f;
+
 GLuint g_mrtShader = 0;
 OBJLoader *g_objLoader = nullptr;
 LSystem *tree = new LSystem("P:I+[P+F]--//[--L]I[++L]-[PF]++PF "
@@ -393,6 +398,8 @@ void draw() {
 		drawLight();
 		glUniform1i(glGetUniformLocation(g_occlusionShader, "isLight"),0);
 		g_particleSystem->render();
+		g_table->render();
+		g_cloth->render();
 		glPushMatrix();
 			// glScalef(2,2,2);
 			glRotatef(-90,1,0,0);
@@ -437,6 +444,8 @@ void draw() {
 		glUseProgram(g_occlusionShader);
 		glUniform1i(glGetUniformLocation(g_occlusionShader, "isLight"),0);
 		g_particleSystem->render();
+		g_table->render();
+		g_cloth->render();
 		glPushMatrix();
 			// glScalef(2,2,2);
 			glRotatef(-90,1,0,0);
@@ -482,6 +491,8 @@ void draw() {
 
 		glUseProgram(g_fongShader);
 		g_particleSystemRope->render();
+		g_table->render();
+		g_cloth->render();
 		glUseProgram(0);
 
 		glUseProgram(g_texFongShader);
@@ -557,6 +568,10 @@ void keyboardCallback(unsigned char key, int x, int y) {
 			g_lightParticle[2]+=0.5;break;
 		case 'e': // 
 			g_lightParticle[2]-=0.5;break;
+		case 'o' :
+			g_growthSpeed -= 0.01f; break;
+		case 'p' :
+			g_growthSpeed += 0.01f; break;
 		case '1': // 
 			volLightCol.x = max(volLightCol.x-0.1f, 0.0f);break;
 		case '2': // 
@@ -645,6 +660,11 @@ int main(int argc, char **argv) {
 
 	g_particleSystemRope = new RopeParticleSystem(50, 6);
 	g_particleSystemRope->create();
+
+	g_table = new OBJLoader("work/res/assets/table/tableStand.obj");
+	g_cloth = new OBJLoader("work/res/assets/table/tableCloth_v2_short.obj");
+	g_table->setScale(0.075f);
+	g_cloth->setScale(0.075f);
 
 	glutMainLoop();
 	// Don't forget to delete all pointers that we made

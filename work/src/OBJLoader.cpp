@@ -178,38 +178,41 @@ void OBJLoader::createNormals() {
 }
 
 void OBJLoader::render() {
-	glBegin(GL_TRIANGLES);
-	for(uint i = 0; i < m_triangles.size(); i++) {
-		obj_triangle t = m_triangles[i];
+	glPushMatrix();
+		glScalef(m_scale,m_scale, m_scale);
+		glBegin(GL_TRIANGLES);
+		for(uint i = 0; i < m_triangles.size(); i++) {
+			obj_triangle t = m_triangles[i];
 
-		//Get the 3 points of this triangle
-		vec3 a = m_points[t.v[0].p];
-		vec3 b = m_points[t.v[1].p];
-		vec3 c = m_points[t.v[2].p];
+			//Get the 3 points of this triangle
+			vec3 a = m_points[t.v[0].p];
+			vec3 b = m_points[t.v[1].p];
+			vec3 c = m_points[t.v[2].p];
 
-		//normals
-		vec3 an = m_normals[t.v[0].n];
-		vec3 bn = m_normals[t.v[1].n];
-		vec3 cn = m_normals[t.v[2].n];
+			//normals
+			vec3 an = m_normals[t.v[0].n];
+			vec3 bn = m_normals[t.v[1].n];
+			vec3 cn = m_normals[t.v[2].n];
 
-		//uv
-		vec2 auv = m_uvs[t.v[0].t]*5;
-		vec2 buv = m_uvs[t.v[1].t]*5;
-		vec2 cuv = m_uvs[t.v[2].t]*5;
+			//uv
+			vec2 auv = m_uvs[t.v[0].t]*5;
+			vec2 buv = m_uvs[t.v[1].t]*5;
+			vec2 cuv = m_uvs[t.v[2].t]*5;
 
-		glNormal3f(an.x, an.y, an.z);
-		glTexCoord2f(auv.x, auv.y);
-		glVertex3f(a.x, a.y, a.z);
+			glNormal3f(an.x, an.y, an.z);
+			glTexCoord2f(auv.x, auv.y);
+			glVertex3f(a.x, a.y, a.z);
 
-		glNormal3f(bn.x, bn.y, bn.z);
-		glTexCoord2f(buv.x, buv.y);
-		glVertex3f(b.x, b.y, b.z);
-		
+			glNormal3f(bn.x, bn.y, bn.z);
+			glTexCoord2f(buv.x, buv.y);
+			glVertex3f(b.x, b.y, b.z);
+			
 
-		glNormal3f(cn.x, cn.y, cn.z);
-		glTexCoord2f(cuv.x, cuv.y);
-		glVertex3f(c.x, c.y, c.z);
-		
-	}
-	glEnd();
+			glNormal3f(cn.x, cn.y, cn.z);
+			glTexCoord2f(cuv.x, cuv.y);
+			glVertex3f(c.x, c.y, c.z);
+			
+		}
+		glEnd();
+	glPopMatrix();
 }
