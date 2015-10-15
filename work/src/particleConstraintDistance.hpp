@@ -12,6 +12,8 @@ private:
 
 	float m_restingDistance;
 	float m_softness;
+
+	bool m_isFragile = true;
 public:
 
 	ParticleConstraintDistance(float *a, float *b, float softness) {
@@ -33,6 +35,14 @@ public:
 		m_softness = softness;
 	}
 
+		ParticleConstraintDistance(float *a, float *b, float restingDistance, float softness, bool fragile) {
+		m_a = a;
+		m_b = b;
+		m_restingDistance = restingDistance;
+		m_softness = softness;
+		m_isFragile = fragile;
+	}
+
 	//solve returns true if this constraint should be deleted
 	bool solve() {
 		//difference
@@ -49,7 +59,7 @@ public:
 
 		float d = sqrt(dx*dx + dy*dy + dz*dz);
 
-		if(d > m_restingDistance) {
+		if(m_isFragile && d > m_restingDistance) {
 			return true;
 		}
 

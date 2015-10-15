@@ -25,6 +25,8 @@
 #include "particleSystem.hpp"
 #include "particleSystemBasic.hpp"
 #include "particleSystemSwarm.hpp"
+#include "particleSystemOBJ.hpp"
+#include "OBJLoader.hpp"
 #include "lsystemtree.hpp"
 
 using namespace std;
@@ -76,7 +78,9 @@ unsigned int renderTexture2,depthTexture2, shadowMap2, renderTexture2_1;
 
 // Particles
 ParticleSystem *g_particleSystem = nullptr;
+ParticleSystem *g_particleSystemOBJ = nullptr;
 GLuint g_mrtShader = 0;
+OBJLoader *g_objLoader = nullptr;
 
 LSystem *tree = new LSystem("A:[&FL!A]/////`[&FL!A]///////`[&FL!A] "
                            "F:S/////F "

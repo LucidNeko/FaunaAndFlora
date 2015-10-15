@@ -19,6 +19,7 @@ SET(headers
 	"particleConstraintDistance.hpp"
 	"particleConstraintAngle.hpp"
 	"particleConstraintPlane.hpp"
+	"OBJLoader.hpp"
 	"lsystemtree.hpp"
 )
 
@@ -30,6 +31,7 @@ SET(sources
 	"geometries.cpp"
 	"lights.cpp"	
 	"particleSystem.cpp"
+	"OBJLoader.cpp"
 	"lsystemtree.cpp"
 )
 
