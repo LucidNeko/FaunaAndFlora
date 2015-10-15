@@ -37,7 +37,7 @@ Lights::Lights(){
 
 void Lights::ambientLight()
 {
-	GLfloat ambient[] = {0.12f, 0.11f, 0.07f, 1.0f};
+	GLfloat ambient[] = {0.62f, 0.611f, 0.607f, 1.0f};
 	glLightfv(GL_LIGHT3, GL_AMBIENT,  ambient);	
 	glEnable(GL_LIGHT3);
 }
@@ -45,7 +45,7 @@ void Lights::ambientLight()
 void Lights::directionLight()
 {
 	GLfloat direction[]	    = {1.0f, 0.50f, 0.0f, 0.0f};
-	GLfloat diffintensity[] = {0.85098039215, 0.39215686274, 0.34901960784, 1.0f};
+	GLfloat diffintensity[] = {0.85098039215, 0.539215686274, 0.534901960784, 1.0f};
 
 	glLightfv(GL_LIGHT2, GL_POSITION, direction);
 	glLightfv(GL_LIGHT2, GL_DIFFUSE,  diffintensity);
