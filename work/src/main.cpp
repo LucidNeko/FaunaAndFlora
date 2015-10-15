@@ -59,6 +59,8 @@ GLuint g_texShader = 0;
 GLuint g_twoTexShader = 0;
 GLuint g_blurShader = 0;
 GLuint g_fongShader = 0;
+GLuint g_texFongShader = 0;
+float *g_lightParticle = nullptr;
 vec3 lightPos = vec3(10.0,05.5,-30);
 vec3 lightDir = vec3(0.0f, -1.0f, 0.0f);
 vec3 cameraPosition = vec3(0.0f,0.0f,0.0f);
@@ -131,6 +133,7 @@ void initShader() {
 	g_twoTexShader = makeShaderProgram("work/res/shaders/twoTexShader.vert", "work/res/shaders/twoTexShader.frag");
 	g_blurShader = makeShaderProgram("work/res/shaders/blurShader.vert", "work/res/shaders/blurShader.frag");
 	g_fongShader = makeShaderProgram("work/res/shaders/fongShader.vert", "work/res/shaders/fongShader.frag");
+	g_texFongShader = makeShaderProgram("work/res/shaders/texFongShader.vert", "work/res/shaders/texFongShader.frag");
 }
 unsigned int createTexture(int w,int h,bool isDepth=false){
 	unsigned int textureId;
@@ -344,6 +347,13 @@ void draw() {
 	// TICK METHODS
 	g_particleSystem->tick(1.f/60.f);
 
+	// UPDATE LIGHT POS
+	if (g_lightParticle != nullptr){
+		lightPos.x = g_lightParticle[0];
+		lightPos.y = g_lightParticle[1];
+		lightPos.z = g_lightParticle[2];
+	}
+
 	// Black background
 	// glClearColor(0.0f,0.0f,0.0f,1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -442,11 +452,14 @@ void draw() {
 		glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
 		glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
 		glMaterialf(GL_FRONT, GL_SHININESS, shininess);
-		g_particleSystem->render();
 		glPushMatrix();
 			glRotatef(-90,1,0,0);
 			tree->draw(5);
 		glPopMatrix();
+		glUseProgram(0);
+
+		glUseProgram(g_texFongShader);
+		g_particleSystem->render();
 		glUseProgram(0);
 // END COLOUR DRAW		
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
