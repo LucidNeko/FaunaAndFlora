@@ -60,7 +60,7 @@ void Lights::pointLight()
 	// POINT LIGHT
 	//
 	GLfloat lig_diff[] = {0.1545098039, 0.194901960784, 0.169411764705, 1.0};
-	GLfloat lig_spec[] = {0.1345098039, 0.194901960784, 0.149411764705, 1.0};
+	GLfloat lig_spec[] = {0.445098039, 0.44901960784, 0.49411764705, 1.0};
 
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, lig_diff);
 	glLightfv(GL_LIGHT1, GL_SPECULAR, lig_spec);
