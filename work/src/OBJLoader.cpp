@@ -15,11 +15,6 @@ using namespace comp308;
 OBJLoader::OBJLoader(std::string fname) {
 	m_fname = fname;
 	readOBJ(fname);
-
-	// float *p = &m_points[1].x;
-	// p[0] += 10;
-	// p[1] += 10;
-	// p[2] += 10;
 }
 
 void OBJLoader::readOBJ(std::string fname) {
@@ -205,7 +200,6 @@ void OBJLoader::render() {
 		glNormal3f(an.x, an.y, an.z);
 		glTexCoord2f(auv.x, auv.y);
 		glVertex3f(a.x, a.y, a.z);
-		
 
 		glNormal3f(bn.x, bn.y, bn.z);
 		glTexCoord2f(buv.x, buv.y);

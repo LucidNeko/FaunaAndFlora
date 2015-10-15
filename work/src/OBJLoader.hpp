@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "comp308.hpp"
+#include "IRenderable.hpp"
 
 struct obj_vertex {
 	int p = 0;
@@ -17,7 +18,7 @@ struct obj_triangle {
 	obj_vertex v[3];
 };
 
-class OBJLoader {
+class OBJLoader : public IRenderable {
 private:
 	std::string m_fname;
 	
@@ -34,5 +35,5 @@ public:
 
 	OBJLoader(std::string fname);
 
-	void render();
+	virtual void render();
 };
