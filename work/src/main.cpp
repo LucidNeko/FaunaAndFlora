@@ -48,11 +48,12 @@ bool g_mouseDown = false;
 vec2 g_mousePos;
 float g_yRotation = 0;
 float g_xRotation = 0;
-float g_zoomFactor = 1.0;
+float g_zoomFactor = 1.21;
 
 // Scene information
 GLuint g_texture = 0;
 GLuint g_beeTexture = 0;
+GLuint g_woodTexture = 0;
 bool g_useShader = false;
 GLuint g_volumetricShader = 0;
 GLuint g_materialShader = 0;
@@ -146,6 +147,18 @@ void initTexture() {
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	// Finnaly, actually fill the data into our texture
 	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, texBee.w, texBee.h, texBee.glFormat(), GL_UNSIGNED_BYTE, texBee.dataPointer());
+
+	image texwood("work/res/textures/wood.jpg");
+	glActiveTexture(GL_TEXTURE0); // Use slot 0, need to use GL_TEXTURE1 ... etc if using more than one texture PER OBJECT
+	glGenTextures(1, &g_woodTexture); // Generate texture ID
+	glBindTexture(GL_TEXTURE_2D, g_woodTexture); // Bind it as a 2D texture
+	// Setup sampling strategies
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// Finnaly, actually fill the data into our texture
+	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, texwood.w, texwood.h, texwood.glFormat(), GL_UNSIGNED_BYTE, texwood.dataPointer());
 }
 void initShader() {
 	g_volumetricShader = makeShaderProgram("work/res/shaders/volumetricShader.vert", "work/res/shaders/volumetricShader.frag");
@@ -370,6 +383,7 @@ void draw() {
 	tree->tick();
 	g_particleSystem->tick(1.f/60.f);
 	g_particleSystemRope->tick(1.f/60.f);
+	g_particleSystemOBJ->tick(1.f/60.f);
 
 	// UPDATE LIGHT POS
 	if (g_lightParticle != nullptr){
@@ -399,7 +413,8 @@ void draw() {
 		glUniform1i(glGetUniformLocation(g_occlusionShader, "isLight"),0);
 		g_particleSystem->render();
 		g_table->render();
-		g_cloth->render();
+		// g_cloth->render();
+		g_particleSystemOBJ->render();
 		glPushMatrix();
 			// glScalef(2,2,2);
 			glRotatef(-90,1,0,0);
@@ -445,7 +460,8 @@ void draw() {
 		glUniform1i(glGetUniformLocation(g_occlusionShader, "isLight"),0);
 		g_particleSystem->render();
 		g_table->render();
-		g_cloth->render();
+		// g_cloth->render();
+		g_particleSystemOBJ->render();
 		glPushMatrix();
 			// glScalef(2,2,2);
 			glRotatef(-90,1,0,0);
@@ -491,13 +507,29 @@ void draw() {
 
 		glUseProgram(g_fongShader);
 		g_particleSystemRope->render();
-		g_table->render();
-		g_cloth->render();
+		
+		//render cloth
+		GLfloat ambient2[] = { 0.20, 0.2, 0.2, 1.0 };
+		GLfloat diffuse2[] = { 0.9, 0.9, 0.9};
+		GLfloat specular2[] = {0.05, 0.05, 0.05};
+		GLfloat shininess2 = 128.0f * 0.7f;
+		glMaterialfv(GL_FRONT, GL_AMBIENT, ambient2);
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse2);
+		glMaterialfv(GL_FRONT, GL_SPECULAR, specular2);
+		glMaterialf(GL_FRONT, GL_SHININESS, shininess2);
+
+		// g_cloth->render();
+		g_particleSystemOBJ->render();
 		glUseProgram(0);
 
 		glUseProgram(g_texFongShader);
 		glBindTexture(GL_TEXTURE_2D,g_beeTexture);
 		g_particleSystem->render();
+		glUseProgram(0);
+
+		glUseProgram(g_texFongShader);
+		glBindTexture(GL_TEXTURE_2D,g_woodTexture);
+		g_table->render();
 		glUseProgram(0);
 // END COLOUR DRAW		
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
@@ -557,11 +589,11 @@ void keyboardCallback(unsigned char key, int x, int y) {
 	// cout << "Keyboard Callback :: key=" << key << ", x,y=(" << x << "," << y << ")" << endl;
 		switch(key){
 		case 'w': // 
-			g_lightParticle[1]-=0.5; break;
+			g_lightParticle[1]+=0.5; break;
 		case 'a': // 
 			g_lightParticle[0]-=0.5; break;
 		case 's': // 
-			g_lightParticle[1]+=0.5;break;
+			g_lightParticle[1]-=0.5;break;
 		case 'd': // 
 			g_lightParticle[0]+=0.5;break;
 		case 'q': // 
@@ -662,9 +694,12 @@ int main(int argc, char **argv) {
 	g_particleSystemRope->create();
 
 	g_table = new OBJLoader("work/res/assets/table/tableStand.obj");
-	g_cloth = new OBJLoader("work/res/assets/table/tableCloth_v2_short.obj");
+	g_cloth = new OBJLoader("work/res/assets/table/tableCloth_v2_short_joined.obj");
 	g_table->setScale(0.075f);
 	g_cloth->setScale(0.075f);
+
+	g_particleSystemOBJ = new OBJParticleSystem(g_cloth, 1000, 4);
+	g_particleSystemOBJ->create();
 
 	glutMainLoop();
 	// Don't forget to delete all pointers that we made

@@ -4,6 +4,38 @@
 
 #include "particleConstraint.hpp"
 
+class Wind: public ParticleConstraint {
+private:
+	float *m_p;
+	float *m_windDir;
+
+	float m_speed;
+
+public:
+	Wind(float *particle, float *windDir, float speed) {
+		m_p = particle;
+		m_windDir = windDir;
+
+		m_speed = speed;
+	}
+
+	bool solve() {
+		m_p[0] += m_windDir[0] * m_speed;
+		m_p[1] += m_windDir[1] * m_speed;
+		m_p[2] += m_windDir[2] * m_speed;
+
+		return false;
+	}
+
+	void render() {
+		glColor3f(0.5f,0.5f,0);
+		glBegin(GL_LINES);
+			glVertex3f(m_p[0], m_p[1], m_p[2]);
+			glVertex3f(m_p[0] + m_windDir[0], m_p[1] + m_windDir[1], m_p[2] + m_windDir[2]);
+		glEnd();
+	}
+};
+
 class Follow: public ParticleConstraint {
 private:
 	float *m_src;

@@ -40,5 +40,9 @@ public:
 		m_scale = scale;
 	};
 
+	float getScale() {
+		return m_scale;
+	};
+
 	virtual void render();
 };

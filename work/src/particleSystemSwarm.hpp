@@ -16,6 +16,8 @@
 
 using namespace std;
 
+extern float *g_lightParticle;
+
 class SwarmParticleSystem: public ParticleSystem {
 private:
 	float *m_pin;
@@ -86,6 +88,24 @@ public:
 
 			if(sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2]) > 2) {
 				m_constraints.push_back(new Attraction(a, m_pin, 0.000001f, 1.99f));
+			}
+		}
+
+		//if near light
+		for(uint i = 0; i < m_particleCount-1; i++) {
+			float *a = &m_particles[i*NUM_COMPONENTS];
+			float *b = g_lightParticle;
+
+			float dx = a[0] - b[0];
+			float dy = a[1] - b[1];
+			float dz = a[2] - b[2];
+
+			// if(sqrt(dx*dx + dy*dy + dz*dz) > 2) {
+			// 	m_constraints.push_back(new Attraction(a, m_pin, 0.000001f, 1.99f));
+			// }
+
+			if(sqrt(dx*dx + dy*dy + dz*dz) < 15) {
+				m_constraints.push_back(new Attraction(a, b, 0.000001f, 10.f));
 			}
 		}
 

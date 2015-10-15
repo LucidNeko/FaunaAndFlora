@@ -40,6 +40,8 @@ void ParticleSystem::tick(float delta) {
 	for(uint i = 0; i < m_constraintIterations; i++) {
 		solveConstraints(delta);
 	}
+
+	// cout << "Constraints: " << m_constraints.size() << endl;
 }
 
 void ParticleSystem::render() {
