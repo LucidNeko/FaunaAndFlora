@@ -341,7 +341,9 @@ void drawQuad(GLdouble winX, GLdouble winY,	GLdouble winZ){
 //  ████████▀    ███    ███   ███    █▀   ▀███▀███▀  
 //               ███    ███                          
 void draw() {
+	// TICK METHODS
 	g_particleSystem->tick(1.f/60.f);
+
 	// Black background
 	// glClearColor(0.0f,0.0f,0.0f,1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -355,6 +357,7 @@ void draw() {
 	// DRAW TO FBO ORIGINAL OCCLUSION MAP
 	glBindFramebuffer(GL_FRAMEBUFFER,FBO0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+// START OCCUSION DRAW 
 		glUseProgram(g_occlusionShader);
 		glUniform1i(glGetUniformLocation(g_occlusionShader, "isLight"),1);
 		glUniform3f(glGetUniformLocation(g_occlusionShader, "lightColor"),volLightCol.x,volLightCol.y,volLightCol.z);
@@ -366,6 +369,7 @@ void draw() {
 			tree->draw(5);
 		glPopMatrix();
 		glUseProgram(0);
+// END OCCUSION DRAW
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
 
 	// DRAW ON QUAD RADIAL BLUR EFFECT
@@ -398,6 +402,7 @@ void draw() {
 		glUseProgram(0);
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_DEPTH_TEST);
+// START OCCUSION DRAW		
 		setUpCamera();
 		glUseProgram(g_occlusionShader);
 		glUniform1i(glGetUniformLocation(g_occlusionShader, "isLight"),0);
@@ -408,6 +413,7 @@ void draw() {
 		glPopMatrix();
 		glEnable(GL_DEPTH_TEST);
 		glUseProgram(0);
+// END OCCUSION DRAW		
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER,FBO3);
@@ -422,43 +428,11 @@ void draw() {
 		glUseProgram(0);		
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
 
-	// // 3 Passes of linear blur
-	// // 1
-	// glBindFramebuffer(GL_FRAMEBUFFER,FBO2);
-	// 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	// 	glActiveTexture(GL_TEXTURE0);
-	// 	glBindTexture(GL_TEXTURE_2D,renderTexture1);
-	//     glUseProgram(g_blurShader);
-	// 	glUniform1i(glGetUniformLocation(g_blurShader,"isVertical"),1);
-	// 	glUniform2f(glGetUniformLocation(g_blurShader,"pixelSize"),1.0/float(g_winWidth),1.0/float(g_winHeight));
-	// 	drawQuad(normalizedWinX, normalizedWinY, normalizedWinZ);	
-	// glBindFramebuffer(GL_FRAMEBUFFER,0);
-	// // 2
-	// glBindFramebuffer(GL_FRAMEBUFFER,FBO2);
-	// 	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderTexture1,0);
-	// 	glActiveTexture(GL_TEXTURE0);
-	// 	glBindTexture(GL_TEXTURE_2D,renderTexture2);
-	//     glUseProgram(g_blurShader);
-	// 	glUniform1i(glGetUniformLocation(g_blurShader,"isVertical"),0);
-	// 	glUniform2f(glGetUniformLocation(g_blurShader,"pixelSize"),1.0/float(g_winWidth),1.0/float(g_winHeight));
-	// 	drawQuad(normalizedWinX, normalizedWinY, normalizedWinZ);	
-	// glBindFramebuffer(GL_FRAMEBUFFER,0);
-	// // 3
-	// glBindFramebuffer(GL_FRAMEBUFFER,FBO2);
-	// 	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderTexture2,0);
-	// 	glActiveTexture(GL_TEXTURE0);
-	// 	glBindTexture(GL_TEXTURE_2D,renderTexture1);
-	//     glUseProgram(g_blurShader);
-	// 	glUniform1i(glGetUniformLocation(g_blurShader,"isVertical"),1);
-	// 	glUniform2f(glGetUniformLocation(g_blurShader,"pixelSize"),1.0/float(g_winWidth),1.0/float(g_winHeight));
-	// 	drawQuad(normalizedWinX, normalizedWinY, normalizedWinZ);	
-	// glBindFramebuffer(GL_FRAMEBUFFER,0);
-
-
 	glBindFramebuffer(GL_FRAMEBUFFER,FBO2);
 		setUpCamera();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderTexture0,0);
+// START COLOR DRAW		
 	    glUseProgram(g_fongShader);
 		GLfloat ambient[] = { 0.20, 0.0, 0.0, 1.0 };
 		GLfloat diffuse[] = { 0.5, 0.0, 0.0};
@@ -474,6 +448,7 @@ void draw() {
 			tree->draw(5);
 		glPopMatrix();
 		glUseProgram(0);
+// END COLOUR DRAW		
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
 
 	// Final draw scene to quad
