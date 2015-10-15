@@ -51,6 +51,7 @@ float g_zoomFactor = 1.0;
 
 // Scene information
 GLuint g_texture = 0;
+GLuint g_beeTexture = 0;
 bool g_useShader = false;
 GLuint g_volumetricShader = 0;
 GLuint g_materialShader = 0;
@@ -59,10 +60,13 @@ GLuint g_texShader = 0;
 GLuint g_twoTexShader = 0;
 GLuint g_blurShader = 0;
 GLuint g_fongShader = 0;
+GLuint g_texFongShader = 0;
+float *g_lightParticle = nullptr;
 vec3 lightPos = vec3(10.0,05.5,-30);
 vec3 lightDir = vec3(0.0f, -1.0f, 0.0f);
 vec3 cameraPosition = vec3(0.0f,0.0f,0.0f);
 
+vec3 volLightCol = vec3(1.0f,1.0f,1.0f);
 // Object to hold the geometries
 Geometries *g_geometries = nullptr;
 
@@ -75,6 +79,8 @@ unsigned int FBO1;
 unsigned int renderTexture1,depthTexture1, shadowMap1;
 unsigned int FBO2;
 unsigned int renderTexture2,depthTexture2, shadowMap2, renderTexture2_1;
+unsigned int FBO3;
+unsigned int renderTexture3,depthTexture3;
 
 // Particles
 ParticleSystem *g_particleSystem = nullptr;
@@ -119,6 +125,18 @@ void initTexture() {
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	// Finnaly, actually fill the data into our texture
 	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, tex.w, tex.h, tex.glFormat(), GL_UNSIGNED_BYTE, tex.dataPointer());
+
+	image texBee("work/res/assets/bee/bee.png");
+	glActiveTexture(GL_TEXTURE0); // Use slot 0, need to use GL_TEXTURE1 ... etc if using more than one texture PER OBJECT
+	glGenTextures(1, &g_beeTexture); // Generate texture ID
+	glBindTexture(GL_TEXTURE_2D, g_beeTexture); // Bind it as a 2D texture
+	// Setup sampling strategies
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// Finnaly, actually fill the data into our texture
+	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, texBee.w, texBee.h, texBee.glFormat(), GL_UNSIGNED_BYTE, texBee.dataPointer());
 }
 void initShader() {
 	g_volumetricShader = makeShaderProgram("work/res/shaders/volumetricShader.vert", "work/res/shaders/volumetricShader.frag");
@@ -128,6 +146,7 @@ void initShader() {
 	g_twoTexShader = makeShaderProgram("work/res/shaders/twoTexShader.vert", "work/res/shaders/twoTexShader.frag");
 	g_blurShader = makeShaderProgram("work/res/shaders/blurShader.vert", "work/res/shaders/blurShader.frag");
 	g_fongShader = makeShaderProgram("work/res/shaders/fongShader.vert", "work/res/shaders/fongShader.frag");
+	g_texFongShader = makeShaderProgram("work/res/shaders/texFongShader.vert", "work/res/shaders/texFongShader.frag");
 }
 unsigned int createTexture(int w,int h,bool isDepth=false){
 	unsigned int textureId;
@@ -186,6 +205,19 @@ void init(){
 	int i2=glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if(i2!=GL_FRAMEBUFFER_COMPLETE){
 		std::cout << "Framebuffer is not OK, status=" << i2 << std::endl;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER,0);
+
+	// FOURTH FBO
+	renderTexture3=createTexture(g_winWidth,g_winHeight);
+	depthTexture3=createTexture(g_winWidth,g_winHeight,true);
+	glGenFramebuffers(1,&FBO3);
+	glBindFramebuffer(GL_FRAMEBUFFER,FBO3);
+	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderTexture3,0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,depthTexture3,0);
+	int i3=glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if(i3!=GL_FRAMEBUFFER_COMPLETE){
+		std::cout << "Framebuffer is not OK, status=" << i3 << std::endl;
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
 }
@@ -325,7 +357,16 @@ void drawQuad(GLdouble winX, GLdouble winY,	GLdouble winZ){
 //  ████████▀    ███    ███   ███    █▀   ▀███▀███▀  
 //               ███    ███                          
 void draw() {
+	// TICK METHODS
 	g_particleSystem->tick(1.f/60.f);
+
+	// UPDATE LIGHT POS
+	if (g_lightParticle != nullptr){
+		lightPos.x = g_lightParticle[0];
+		lightPos.y = g_lightParticle[1];
+		lightPos.z = g_lightParticle[2];
+	}
+
 	// Black background
 	// glClearColor(0.0f,0.0f,0.0f,1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -336,20 +377,23 @@ void draw() {
 	glEnable(GL_NORMALIZE);
 	setUpCamera();
 
-	// DRAW TO FBO
+	// DRAW TO FBO ORIGINAL OCCLUSION MAP
 	glBindFramebuffer(GL_FRAMEBUFFER,FBO0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+// START OCCUSION DRAW 
 		glUseProgram(g_occlusionShader);
 		glUniform1i(glGetUniformLocation(g_occlusionShader, "isLight"),1);
+		glUniform3f(glGetUniformLocation(g_occlusionShader, "lightColor"),volLightCol.x,volLightCol.y,volLightCol.z);
 		drawLight();
 		glUniform1i(glGetUniformLocation(g_occlusionShader, "isLight"),0);
-		// drawScene();
 		g_particleSystem->render();
-				glPushMatrix();
+		glPushMatrix();
+			glScalef(2,2,2);
 			glRotatef(-90,1,0,0);
 			tree->draw(5);
 		glPopMatrix();
 		glUseProgram(0);
+// END OCCUSION DRAW
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
 
 	// DRAW ON QUAD RADIAL BLUR EFFECT
@@ -381,45 +425,39 @@ void draw() {
 		drawQuad(normalizedWinX, normalizedWinY, normalizedWinZ);	
 		glUseProgram(0);
 		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_DEPTH_TEST);
+// START OCCUSION DRAW		
+		setUpCamera();
+		glUseProgram(g_occlusionShader);
+		glUniform1i(glGetUniformLocation(g_occlusionShader, "isLight"),0);
+		g_particleSystem->render();
+		glPushMatrix();
+			glScalef(2,2,2);
+			glRotatef(-90,1,0,0);
+			tree->draw(5);
+		glPopMatrix();
+		glEnable(GL_DEPTH_TEST);
+		glUseProgram(0);
+// END OCCUSION DRAW		
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
 
-	// 3 Passes of linear blur
-	// 1
-	glBindFramebuffer(GL_FRAMEBUFFER,FBO2);
+	glBindFramebuffer(GL_FRAMEBUFFER,FBO3);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		// glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderTexture3,0);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D,renderTexture1);
-	    glUseProgram(g_blurShader);
-		glUniform1i(glGetUniformLocation(g_blurShader,"isVertical"),1);
-		glUniform2f(glGetUniformLocation(g_blurShader,"pixelSize"),1.0/float(g_winWidth),1.0/float(g_winHeight));
+	    glUseProgram(g_volumetricShader);
+   		glUniform3f(glGetUniformLocation(g_volumetricShader, "lPos"),normalizedWinX,normalizedWinY,normalizedWinZ);
 		drawQuad(normalizedWinX, normalizedWinY, normalizedWinZ);	
-	glBindFramebuffer(GL_FRAMEBUFFER,0);
-	// 2
-	glBindFramebuffer(GL_FRAMEBUFFER,FBO2);
-		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderTexture1,0);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D,renderTexture2);
-	    glUseProgram(g_blurShader);
-		glUniform1i(glGetUniformLocation(g_blurShader,"isVertical"),0);
-		glUniform2f(glGetUniformLocation(g_blurShader,"pixelSize"),1.0/float(g_winWidth),1.0/float(g_winHeight));
-		drawQuad(normalizedWinX, normalizedWinY, normalizedWinZ);	
-	glBindFramebuffer(GL_FRAMEBUFFER,0);
-	// 3
-	glBindFramebuffer(GL_FRAMEBUFFER,FBO2);
-		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderTexture2,0);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D,renderTexture1);
-	    glUseProgram(g_blurShader);
-		glUniform1i(glGetUniformLocation(g_blurShader,"isVertical"),1);
-		glUniform2f(glGetUniformLocation(g_blurShader,"pixelSize"),1.0/float(g_winWidth),1.0/float(g_winHeight));
-		drawQuad(normalizedWinX, normalizedWinY, normalizedWinZ);	
+		glUseProgram(0);		
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER,FBO2);
 		setUpCamera();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,renderTexture0,0);
+// START COLOR DRAW		
 	    glUseProgram(g_fongShader);
 		GLfloat ambient[] = { 0.20, 0.0, 0.0, 1.0 };
 		GLfloat diffuse[] = { 0.5, 0.0, 0.0};
@@ -429,12 +467,18 @@ void draw() {
 		glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
 		glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
 		glMaterialf(GL_FRONT, GL_SHININESS, shininess);
-		g_particleSystem->render();
 		glPushMatrix();
+			glScalef(2,2,2);
 			glRotatef(-90,1,0,0);
 			tree->draw(5);
 		glPopMatrix();
 		glUseProgram(0);
+
+		glUseProgram(g_texFongShader);
+		glBindTexture(GL_TEXTURE_2D,g_beeTexture);
+		g_particleSystem->render();
+		glUseProgram(0);
+// END COLOUR DRAW		
 	glBindFramebuffer(GL_FRAMEBUFFER,0);
 
 	// Final draw scene to quad
@@ -452,7 +496,7 @@ void draw() {
     glUniform1i(glGetUniformLocation(g_twoTexShader, "texture1"), 1);
 	
     glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D,renderTexture2);//renderTexture, depthTexture, shadowMap
+	glBindTexture(GL_TEXTURE_2D,renderTexture3);//renderTexture, depthTexture, shadowMap
     glUniform1i(glGetUniformLocation(g_twoTexShader, "texture2"), 2);
 
 	drawQuad(normalizedWinX, normalizedWinY, normalizedWinZ);
@@ -476,6 +520,7 @@ void reshape(int w, int h) {
     if (h == 0) h = 1;
 	g_winWidth = w;
 	g_winHeight = h;
+	init();
     glViewport(0, 0, g_winWidth, g_winHeight);  
 }
 //   ▄█  ███▄▄▄▄      ▄███████▄ ███    █▄      ███     
@@ -498,6 +543,18 @@ void keyboardCallback(unsigned char key, int x, int y) {
 			lightPos.y+=0.5;break;
 		case 'd': // scroll back/down
 			lightPos.x+=0.5;break;
+		case '1': // scroll back/down
+			volLightCol.x = max(volLightCol.x-0.1f, 0.0f);break;
+		case '2': // scroll back/down
+			volLightCol.y = max(volLightCol.y-0.1f, 0.0f);break;
+		case '3': // scroll back/down
+			volLightCol.z = max(volLightCol.z-0.1f, 0.0f);break;
+		case '4': // scroll back/down
+			volLightCol.x = min(volLightCol.x+0.1f, 1.0f);break;
+		case '5': // scroll back/down
+			volLightCol.y = min(volLightCol.y+0.1f, 1.0f);break;
+		case '6': // scroll back/down
+			volLightCol.z = min(volLightCol.z+0.1f, 1.0f);break;															
 		}
 }
 void specialCallback(int key, int x, int y) {

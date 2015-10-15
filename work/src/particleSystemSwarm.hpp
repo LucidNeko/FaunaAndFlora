@@ -10,20 +10,24 @@
 #include "particleConstraintPin.hpp"
 #include "particleConstraintPlane.hpp"
 #include "particleBehaviours.hpp"
-
+#include "OBJLoader.hpp"
+#include "gameObject.hpp"
+#include "IRenderable.hpp"
 
 using namespace std;
 
 class SwarmParticleSystem: public ParticleSystem {
 private:
 	float *m_pin;
+
+	IRenderable *bee;
+	vector<IRenderable *> m_renderables;
 public:
 	SwarmParticleSystem(uint maxParticles, uint constraintIterations) : ParticleSystem(maxParticles, constraintIterations) {
 
 	}
 
 	void create() {
-
 		createParticle(  0, 0, 0, &m_pin);
 		m_constraints.push_back(new ParticleConstraintPin(m_pin));
 
@@ -34,6 +38,15 @@ public:
 						   -5 + (rand()/(double(RAND_MAX) + 1))*10, &p);
 
 			m_constraints.push_back(new Move(p, 0.001f));
+		}
+
+
+		//create bees //1 so skip pin
+		bee = new OBJLoader("work/res/assets/bee/bee_body.obj");
+
+		for(uint i = 1; i < m_particleCount; i++) {
+			IRenderable *renderable = new GameObject(&m_particles[i*NUM_COMPONENTS], bee);
+			m_renderables.push_back(renderable);
 		}
 
 		cout << "Created " << m_particleCount << " particles." << endl;
@@ -79,9 +92,12 @@ public:
 
 			}
 		}
+
 	}
 
-	// void render() {
-
-	// }
+	void render() {
+		for(uint i = 0; i < m_renderables.size(); i++) {
+			m_renderables[i]->render();
+		}	
+	}
 };

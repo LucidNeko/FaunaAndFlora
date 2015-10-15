@@ -15,6 +15,7 @@ using namespace comp308;
 extern GLfloat g_zoomFactor;
 extern GLfloat g_xRotation;
 extern GLfloat g_yRotation;
+extern vec3 light;
 
 Lights::Lights(){
 

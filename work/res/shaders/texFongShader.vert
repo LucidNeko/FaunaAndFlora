@@ -14,19 +14,14 @@
 
 #version 120
 
-// Constant across both shaders
-uniform sampler2D texture0;
-
-// Values passed in from the vertex shader
+// Values to pass to the fragment shader
 varying vec3 vNormal;
 varying vec3 vPosition;
 varying vec2 vTextureCoord0;
 
-uniform int isLight;
-uniform vec3 lightColor;
-
 void main() {
-	gl_FragColor = isLight==1 ? vec4(lightColor,1) : vec4(0,0,0,1);		
-	// gl_FragColor = isLight==1 ? vec4(1,1,1,1) : vec4(0.1,0.67,0.19,0.2);	
-	if (isLight==3) gl_FragColor = vec4(0.8,0.67,0.19,0.2);
+	vNormal = normalize(gl_NormalMatrix * gl_Normal);
+	vPosition = vec3(gl_ModelViewMatrix * gl_Vertex);
+	vTextureCoord0 = gl_MultiTexCoord0.xy;
+	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
 }
