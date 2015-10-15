@@ -51,6 +51,7 @@ float g_zoomFactor = 1.0;
 
 // Scene information
 GLuint g_texture = 0;
+GLuint g_beeTexture = 0;
 bool g_useShader = false;
 GLuint g_volumetricShader = 0;
 GLuint g_materialShader = 0;
@@ -124,6 +125,18 @@ void initTexture() {
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	// Finnaly, actually fill the data into our texture
 	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, tex.w, tex.h, tex.glFormat(), GL_UNSIGNED_BYTE, tex.dataPointer());
+
+	image texBee("work/res/assets/bee/bee.png");
+	glActiveTexture(GL_TEXTURE0); // Use slot 0, need to use GL_TEXTURE1 ... etc if using more than one texture PER OBJECT
+	glGenTextures(1, &g_beeTexture); // Generate texture ID
+	glBindTexture(GL_TEXTURE_2D, g_beeTexture); // Bind it as a 2D texture
+	// Setup sampling strategies
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// Finnaly, actually fill the data into our texture
+	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, texBee.w, texBee.h, texBee.glFormat(), GL_UNSIGNED_BYTE, texBee.dataPointer());
 }
 void initShader() {
 	g_volumetricShader = makeShaderProgram("work/res/shaders/volumetricShader.vert", "work/res/shaders/volumetricShader.frag");
@@ -375,6 +388,7 @@ void draw() {
 		glUniform1i(glGetUniformLocation(g_occlusionShader, "isLight"),0);
 		g_particleSystem->render();
 		glPushMatrix();
+			glScalef(2,2,2);
 			glRotatef(-90,1,0,0);
 			tree->draw(5);
 		glPopMatrix();
@@ -418,6 +432,7 @@ void draw() {
 		glUniform1i(glGetUniformLocation(g_occlusionShader, "isLight"),0);
 		g_particleSystem->render();
 		glPushMatrix();
+			glScalef(2,2,2);
 			glRotatef(-90,1,0,0);
 			tree->draw(5);
 		glPopMatrix();
@@ -453,12 +468,14 @@ void draw() {
 		glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
 		glMaterialf(GL_FRONT, GL_SHININESS, shininess);
 		glPushMatrix();
+			glScalef(2,2,2);
 			glRotatef(-90,1,0,0);
 			tree->draw(5);
 		glPopMatrix();
 		glUseProgram(0);
 
 		glUseProgram(g_texFongShader);
+		glBindTexture(GL_TEXTURE_2D,g_beeTexture);
 		g_particleSystem->render();
 		glUseProgram(0);
 // END COLOUR DRAW		
