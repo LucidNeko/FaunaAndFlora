@@ -52,5 +52,9 @@ public:
 
 	void tick(float delta);
 
+	void setGravity(float y) {
+		m_gravityY = y;
+	}
+
 	virtual void render();
 };

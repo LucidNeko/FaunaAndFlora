@@ -42,6 +42,7 @@ public:
 						   -5 + (rand()/(double(RAND_MAX) + 1))*10, &p);
 
 			m_constraints.push_back(new Move(p, 0.005f));
+			m_constraints.push_back(new Ground(p));
 		}
 
 

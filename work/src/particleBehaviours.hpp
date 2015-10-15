@@ -4,6 +4,118 @@
 
 #include "particleConstraint.hpp"
 
+class Pot: public ParticleConstraint {
+private:
+	float *m_particle;
+	float m_minY = -9.9f;
+	float m_maxY = -6.9f;
+	float box = 1.5f;
+public:
+	Pot(float *particle) {
+		m_particle = particle;
+	}
+
+	bool solve() {
+		float x = m_particle[0];
+		float y = m_particle[1];
+		float z = m_particle[2];
+
+		
+//v1
+		// if(x > -box && x < box && z > -box && z < box && y > m_minY && y < m_maxY) {
+		// 	float tx = m_particle[0];
+		// 	float ty = m_particle[1];
+		// 	float tz = m_particle[2];
+
+		// 	// m_particle[0] = m_particle[3];
+		// 	// m_particle[1] = m_particle[4];
+		// 	// m_particle[2] = m_particle[5];
+
+		// 	// m_particle[3] = tx;
+		// 	// m_particle[4] = ty;
+		// 	// m_particle[5] = tz;
+
+		// 	float absx = abs(tx);
+		// 	float absy = abs(ty);
+		// 	float absz = abs(tz);
+
+		// 	//x vs yz
+		// 	if(absx > absy && absx > absz) {
+
+		// 	}
+		// }
+
+//v2
+		// if(x > -box && x < box && z > -box && z < box && y > m_minY && y < m_maxY) {
+		// 	//we are in the box
+		// 	float x1 = x - -box;
+		// 	float x2 = x - box;
+		// 	float nx = abs(x1) > abs(x2) ? x1 : x2; 
+
+		// 	float y1 = y - m_minY;
+		// 	float y2 = y - m_maxY;
+		// 	float ny = abs(y1) > abs(y2) ? y1 : y2;
+
+		// 	float z1 = z - -box;
+		// 	float z2 = z - box;
+		// 	float nz = abs(z1) > abs(z2) ? z1 : z2;
+
+		// 	float absnx = abs(nx);
+		// 	float absny = abs(ny);
+		// 	float absnz = abs(nz);
+
+		// 	if(absnx < absny && absnx < absnz) {
+		// 		m_particle[0] = m_particle[3] = nx;
+		// 	} else if(absny < absnx && absny < absnz) {
+		// 		m_particle[1] = m_particle[4] = ny;
+		// 	} else if(absnz < absnx && absnz < absny) {
+		// 		m_particle[2] = m_particle[5] = nz;
+		// 	}
+		// }
+
+		return false;
+	};
+
+	void render() {
+
+	}
+};
+
+class Ground: public ParticleConstraint {
+private:
+	float *m_particle;
+	float m_minY = -9.9f;
+	float m_maxY = -11.5f;
+	float box = 3.5f * 1.75f; //1.667f because scale of cloth
+public:
+	Ground(float *particle) {
+		m_particle = particle;
+	}
+
+	bool solve() {
+		float x = m_particle[0];
+		float y = m_particle[1];
+		float z = m_particle[2];
+
+		if(x > -box && x < box && z > -box && z < box && y < m_minY && y > m_maxY) {
+		//in box
+			if(abs(y-m_minY) < abs(y-m_maxY)) {
+				m_particle[1] = m_minY;
+				m_particle[4] = m_minY;
+			} else {
+				m_particle[1] = m_maxY;
+				m_particle[4] = m_maxY;
+			}
+		}
+
+		return false;
+	};
+
+	void render() {
+
+	}
+};
+
 class Wind: public ParticleConstraint {
 private:
 	float *m_p;

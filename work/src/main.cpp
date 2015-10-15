@@ -48,7 +48,7 @@ bool g_mouseDown = false;
 vec2 g_mousePos;
 float g_yRotation = 0;
 float g_xRotation = 0;
-float g_zoomFactor = 1.21;
+float g_zoomFactor = 1.4641;
 
 // Scene information
 GLuint g_texture = 0;
@@ -88,6 +88,7 @@ unsigned int FBO3;
 unsigned int renderTexture3,depthTexture3;
 
 // Particles
+bool g_gravity = false;
 ParticleSystem *g_particleSystem = nullptr;
 ParticleSystem *g_particleSystemOBJ = nullptr;
 ParticleSystem *g_particleSystemRope = nullptr;
@@ -730,6 +731,15 @@ void keyboardCallback(unsigned char key, int x, int y) {
 			g_growthSpeed += 0.01f; break;
 		case 'c' :
 			g_IsCubemapeEnabled = !g_IsCubemapeEnabled; break;
+		case 'g' :
+			if(!g_gravity) {
+				g_particleSystem->setGravity(-100);
+				g_gravity = true;
+			} else {
+				g_particleSystem->setGravity(0);
+				g_gravity = false;
+			}
+			break;
 		case '1': // 
 			volLightCol.x = max(volLightCol.x-0.1f, 0.0f);break;
 		case '2': // 
@@ -821,8 +831,10 @@ int main(int argc, char **argv) {
 
 	g_table = new OBJLoader("work/res/assets/table/tableStand.obj");
 	g_cloth = new OBJLoader("work/res/assets/table/tableCloth_v2_short_joined.obj");
-	g_table->setScale(0.075f);
-	g_cloth->setScale(0.075f);
+	// g_table->setScale(0.075f);
+	// g_cloth->setScale(0.075f);
+	g_table->setScale(0.100f);
+	g_cloth->setScale(0.125f);
 
 	g_particleSystemOBJ = new OBJParticleSystem(g_cloth, 1000, 4);
 	g_particleSystemOBJ->create();
