@@ -9,23 +9,31 @@ using namespace std;
 
 void forwarddraw(LSystem*);
 
+GLfloat mats[][3][4] = {{{0.1,0.18725,0.1745,1.0},{0.396,0.74151,0.69102,1.0},{0.297254,0.30829,0.306678,1.0}},//0: turquoise
+                        {{0.0,0.0,0.0,1.0},{0.55,0.55,0.55,1.0},{0.7,0.7,0.7,1.0}},//1: White plastic
+                        {{0.2125,0.1275,0.054,1.0},{0.714,0.4284,0.18144,1.0},{0.393548,0.271906,0.166721,1.0}},//2: bronze
+                        {{0.135,0.2225,0.1575,0.95},{0.54,0.89,0.63,0.95},{0.316228,0.316228,0.316228,0.95}},//3: Jade
+                        {{0.05,0.05,0.0,1.0},{0.5,0.5,0.4,1.0},{0.7,0.7,0.04,1.0}},//4: rubber yellow
+                        {{0.05375,0.05,0.06625,1.0},{0.18275,0.17,0.22525,1.0},{0.0,0.0,0.0,1.0}}};//5: obsidian
+                        //{{},{},{}},
+
 void forward(LSystem *ls){
     glTranslatef(0.0,0.0,0.1);
 }
 
-void forwarddraw(LSystem *ls){
-    glBegin(GL_LINES);
-    glVertex3f(0.0,0.0,0.0);
-    glVertex3f(0.0,0.0,0.1);
-    glEnd();
-    forward(ls);
-}
-
 //void forwarddraw(LSystem *ls){
-//    GLUquadricObj *q = gluNewQuadric();
-//    gluCylinder(q,thickness,thickness,0.1,10,10);
+//    glBegin(GL_LINES);
+//    glVertex3f(0.0,0.0,0.0);
+//    glVertex3f(0.0,0.0,0.1);
+//    glEnd();
 //    forward(ls);
 //}
+
+void forwarddraw(LSystem *ls){
+    GLUquadricObj *q = gluNewQuadric();
+    gluCylinder(q,ls->thickness.back(),ls->thickness.back(),0.1,10,10);
+    forward(ls);
+}
 
 void inccolor(LSystem *ls){}
 void decdiam(LSystem *ls){
@@ -40,6 +48,7 @@ void leftbrac(LSystem *ls){
 void rightbrac(LSystem *ls){
     glPopMatrix();
     ls->thickness.pop_back();
+    glLineWidth(ls->thickness.back());
 }
 
 void rotxpos(LSystem *ls){glRotatef(ls->theta,1.0,0.0,0.0);}
@@ -65,6 +74,7 @@ LSystem::LSystem(string rulesstr, string a, GLfloat th, string colours):theta(th
     insts['`']=inccolor;
     insts['!']=decdiam;
 
+    original_theta = th;
     radtheta = (th*PI)/180.0;
 
     stringstream rulestream(rulesstr);
@@ -79,22 +89,24 @@ LSystem::LSystem(string rulesstr, string a, GLfloat th, string colours):theta(th
 
     stringstream colourstream(colours);
     string colour;
-    string numverts,rs,gs,bs;
+    int plen,coli;
     while(colourstream >> colour){
-        stringstream onecolstream(colour);
-        getline(onecolstream,numverts,':');
-        getline(onecolstream,rs,':');
-        getline(onecolstream,gs,':');
-        getline(onecolstream,bs,':');
-        vec3 c = vec3(atoi(rs.c_str())/255.0, atoi(gs.c_str())/255.0, atoi(bs.c_str())/255.0);
-        cout << atoi(numverts.c_str());
-        colourvecs[atoi(numverts.c_str())] = c;
+        sscanf(colour.c_str(),"%i:%i",&plen,&coli);
+        matlookup[plen] = coli;
     }
 }
 
+void LSystem::tick(){
+    counter += 0.02;
+    theta = original_theta + sin(counter);
+    radtheta = (theta*PI)/180.0;
+}
+
 void LSystem::draw(int iteration){
+    draw_pot();
+
     thickness.clear();
-    thickness.push_back(5.0);
+    thickness.push_back(0.013);
     string s;
     map<int,string>::iterator it = evald.find(iteration);
     if(it == evald.end()){
@@ -121,8 +133,7 @@ void LSystem::draw(int iteration){
         s = string(it->second);
     }
 
-    vec3 c = colourvecs[0];
-    glColor3f(c.x,c.y,c.z);
+    setmat(matlookup[0]);
     string polystr;
     bool poly = false;
     map<char,pf>::iterator it2;
@@ -131,13 +142,11 @@ void LSystem::draw(int iteration){
     for(uint i=0; i<s.length(); i++){
         if(s[i] == '{') poly=true;
         else if(s[i] == '}'){
-            c = colourvecs[polystr.length()];
-            glColor3f(c.x,c.y,c.z);
+            setmat(matlookup[polystr.length()]);
             poly=false;
             drawpoly(polystr);
             polystr.clear();
-            c = colourvecs[0];
-            glColor3f(c.x,c.y,c.z);
+            setmat(matlookup[0]);
         }
         else if(poly) polystr += s[i];
         else{
@@ -149,6 +158,23 @@ void LSystem::draw(int iteration){
         }
     }
     glPopMatrix();
+}
+
+void LSystem::draw_pot(){
+    GLUquadricObj *q = gluNewQuadric();
+    gluCylinder(q,0.5,0.8,1.0,50,50);
+    gluDisk(q,0.0,0.5,50,50);
+    glTranslatef(0.0,0.0,0.9);
+    setmat(5);
+    gluDisk(q,0.0,0.7,50,50);
+}
+
+void LSystem::setmat(int mati){
+    GLfloat shiny = 0.25;
+    glMaterialfv(GL_FRONT, GL_AMBIENT, mats[mati][0]);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, mats[mati][1]);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, mats[mati][2]);
+    glMaterialfv(GL_FRONT, GL_SHININESS, &shiny);
 }
 
 void LSystem::drawpoly(string polystr){

@@ -13,9 +13,14 @@ class LSystem{
     map<int,string> evald;
     string axiom;
     GLfloat radtheta;
-    map<int, vec3> colourvecs;
+    map<int, int> matlookup;
+    void setmat(int);
+    void draw_pot();
+    GLfloat counter;
+    GLfloat original_theta;
 
 public:
+    void tick();
     vector<GLfloat> thickness;
     GLfloat theta;
     LSystem(string, string, GLfloat, string);
