@@ -131,8 +131,8 @@ public:
 
 	void create() {
 		m_gravityY = -100;
-		m_dragX = m_dragY = m_dragZ = 1;
-		m_dragY = 0.95f;
+		m_dragX = m_dragZ = 0.98f;
+		m_dragY = 0.96f;
 
 		for(uint i = 0; i < 20; i++) {
 			float *p;

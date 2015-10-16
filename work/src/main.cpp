@@ -532,7 +532,9 @@ void draw() {
 	g_particleSystem->tick(1.f/60.f);
 	g_particleSystemRope->tick(1.f/60.f);
 	g_particleSystemOBJ->tick(1.f/60.f);
-	g_particleSystemBalls->tick(1.f/60.f);
+	if(g_viewBalls) {
+		g_particleSystemBalls->tick(1.f/60.f);
+	}
 
 	// UPDATE LIGHT POS
 	if (g_lightParticle != nullptr){
