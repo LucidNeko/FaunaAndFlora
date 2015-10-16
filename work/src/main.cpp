@@ -92,6 +92,7 @@ bool g_gravity = false;
 ParticleSystem *g_particleSystem = nullptr;
 ParticleSystem *g_particleSystemOBJ = nullptr;
 ParticleSystem *g_particleSystemRope = nullptr;
+ParticleSystem *g_particleSystemBalls = nullptr;
 OBJLoader *g_table = nullptr;
 OBJLoader *g_cloth = nullptr;
 
@@ -102,6 +103,7 @@ bool g_controlA = false;
 bool g_controlS = false;
 bool g_controlD = false;
 bool g_viewRope = false;
+bool g_viewBalls = false;
 
 float g_growthSpeed = 0.025f;
 
@@ -530,6 +532,7 @@ void draw() {
 	g_particleSystem->tick(1.f/60.f);
 	g_particleSystemRope->tick(1.f/60.f);
 	g_particleSystemOBJ->tick(1.f/60.f);
+	g_particleSystemBalls->tick(1.f/60.f);
 
 	// UPDATE LIGHT POS
 	if (g_lightParticle != nullptr){
@@ -564,6 +567,8 @@ void draw() {
 		g_table->render();
 		// g_cloth->render();
 		g_particleSystemOBJ->render();
+
+		if (g_viewBalls) g_particleSystemBalls->render();
 		glPushMatrix();
 			// glScalef(2,2,2);
 			glRotatef(-90,1,0,0);
@@ -611,6 +616,8 @@ void draw() {
 		g_table->render();
 		// g_cloth->render();
 		g_particleSystemOBJ->render();
+
+		if (g_viewBalls) g_particleSystemBalls->render();
 		glPushMatrix();
 			// glScalef(2,2,2);
 			glRotatef(-90,1,0,0);
@@ -661,6 +668,7 @@ void draw() {
 
 		glUseProgram(g_fongShader);
 		if (g_viewRope) g_particleSystemRope->render();
+		if (g_viewBalls) g_particleSystemBalls->render();
 		
 		//render cloth
 		GLfloat ambient2[] = { 0.20, 0.2, 0.2, 1.0 };
@@ -798,7 +806,9 @@ void keyboardUpCallback(unsigned char key, int x, int y) {
 		case 'e': // 
 			g_controlE = false; break;
 		case 'l': // 
-			g_viewRope = !g_viewRope; break;			
+			g_viewRope = !g_viewRope; break;	
+		case 'b': // 
+			g_viewBalls = !g_viewBalls; break;			
 	}
 }
 void specialCallback(int key, int x, int y) {
@@ -876,6 +886,9 @@ int main(int argc, char **argv) {
 
 	g_particleSystemRope = new RopeParticleSystem(50, 6);
 	g_particleSystemRope->create();
+
+	g_particleSystemBalls = new BasicParticleSystem(200, 6);
+	g_particleSystemBalls->create();
 
 	g_table = new OBJLoader("work/res/assets/table/tableStand_115.obj");
 	g_cloth = new OBJLoader("work/res/assets/table/tableCloth_v2_short_joined.obj");

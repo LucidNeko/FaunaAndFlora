@@ -13,6 +13,114 @@
 
 using namespace std;
 
+class Box : public ParticleConstraint {
+private:
+	float *m_particle;
+
+	float m_minX = -10;
+	float m_maxX =  10;
+
+	float m_minY = -10;
+	float m_maxY =  10;
+
+	float m_minZ = -10;
+	float m_maxZ =  10;
+public:
+	Box(float *particle) {
+		m_particle = particle;
+	}
+
+	bool solve() {
+		float x = m_particle[0];
+		float y = m_particle[1];
+		float z = m_particle[2];
+
+		float extra = 1.f;
+
+		if(x < m_minX) m_particle[0] = m_minX + extra;
+		if(x > m_maxX) m_particle[0] = m_maxX - extra;
+
+		if(y < m_minY) m_particle[1] = m_minY + extra;
+		if(y > m_maxY) m_particle[1] = m_maxY - extra;
+
+		if(z < m_minZ) m_particle[2] = m_minZ + extra;
+		if(z > m_maxZ) m_particle[2] = m_maxZ - extra;
+
+		return false;
+	}
+
+	void render() {
+
+	}
+
+};
+
+class Ball : public ParticleConstraint {
+private:
+	float *m_a;
+	float *m_b;
+
+	float m_radiusA;
+	float m_radiusB;
+	float m_restingDistance;
+public:
+	Ball(float *a, float *b, float radiusA, float radiusB) {
+		m_a = a;
+		m_b = b;
+		m_radiusA = radiusA;
+		m_radiusB = radiusB;
+		m_restingDistance = m_radiusA + m_radiusB;
+	}
+
+	bool solve() {
+
+		//difference
+		float dx = m_a[0] - m_b[0];
+		float dy = m_a[1] - m_b[1];
+		float dz = m_a[2] - m_b[2];
+
+		//dislodge if overlapping
+		if(dx == 0 && dy == 0 && dz == 0) {
+			dx = -1 + (rand()/(double(RAND_MAX) + 1))*2 * 0.00001f;
+			dy = -1 + (rand()/(double(RAND_MAX) + 1))*2 * 0.00001f;
+			dz = -1 + (rand()/(double(RAND_MAX) + 1))*2 * 0.00001f;
+		}
+
+		float d = sqrt(dx*dx + dy*dy + dz*dz);
+
+		if(d > m_restingDistance) {
+			return false;
+		}
+
+		if(d < 0.001f) {
+			// d = 0;
+			d = m_restingDistance;
+		} else {
+			d = (m_restingDistance - d) / d;
+		}
+
+		//translation
+		float tx = dx * 0.5f * d;
+		float ty = dy * 0.5f * d;
+		float tz = dz * 0.5f * d;
+
+		//reassign
+		m_a[0] += tx;
+		m_a[1] += ty;
+		m_a[2] += tz;
+
+		m_b[0] -= tx;
+		m_b[1] -= ty;
+		m_b[2] -= tz;
+
+		return false;
+	}
+
+	void render() {
+
+	}
+};
+
 class BasicParticleSystem: public ParticleSystem {
 private:
 
@@ -22,185 +130,74 @@ public:
 	}
 
 	void create() {
+		m_gravityY = -100;
+		m_dragX = m_dragY = m_dragZ = 1;
+		m_dragY = 0.95f;
 
-		float **p = new float*[MAX_PARTICLES];
+		for(uint i = 0; i < 20; i++) {
+			float *p;
+			// createParticle(-5 + (rand()/(double(RAND_MAX) + 1))*10,
+			// 			   -5 + (rand()/(double(RAND_MAX) + 1))*10,
+			// 			   -5 + (rand()/(double(RAND_MAX) + 1))*10, &p);
+			createParticle(-4, 10 - i*0.4f, -4, &p);
+			p[0] += -0.1f + (rand()/(double(RAND_MAX) + 1))*0.2f;
+			p[1] += -0.1f + (rand()/(double(RAND_MAX) + 1))*0.2f;
+			p[2] += -0.1f + (rand()/(double(RAND_MAX) + 1))*0.2f;
+			m_constraints.push_back(new Box(p));
 
-		createParticle(0,0,0,&p[0]);
-		m_constraints.push_back(new ParticleConstraintPin(p[0]));
+			createParticle(-4, 10 - i*0.4f, 4, &p);
+			p[0] += -0.1f + (rand()/(double(RAND_MAX) + 1))*0.2f;
+			p[1] += -0.1f + (rand()/(double(RAND_MAX) + 1))*0.2f;
+			p[2] += -0.1f + (rand()/(double(RAND_MAX) + 1))*0.2f;
+			m_constraints.push_back(new Box(p));
 
-		float PI = 3.1415926535897932384626433832795;
-		float radius = 2;
-		uint nSides = 8;
-		uint layers = 10;
-		for(uint layer = 1; layer < layers; layer++) {
-			for(double i = 0; i < 2 * PI; i += PI / (nSides/2)) {
-				createParticle(0 + cos(i) * radius*layer, layer*1.5f, 0 + sin(i) * radius*layer, &p[m_particleCount]);
+			createParticle(4, 10 - i*0.4f, -4, &p);
+			p[0] += -0.1f + (rand()/(double(RAND_MAX) + 1))*0.2f;
+			p[1] += -0.1f + (rand()/(double(RAND_MAX) + 1))*0.2f;
+			p[2] += -0.1f + (rand()/(double(RAND_MAX) + 1))*0.2f;
+			m_constraints.push_back(new Box(p));
+
+			createParticle(4, 10 - i*0.4f, 4, &p);
+			p[0] += -0.1f + (rand()/(double(RAND_MAX) + 1))*0.2f;
+			p[1] += -0.1f + (rand()/(double(RAND_MAX) + 1))*0.2f;
+			p[2] += -0.1f + (rand()/(double(RAND_MAX) + 1))*0.2f;
+			m_constraints.push_back(new Box(p));
+			// p[0] = p[1] = p[2] = 0;
+
+			
+		}
+
+		for(uint i = 0; i < m_particleCount-1; i++) {
+			for(uint j = 1; j < m_particleCount; j++) {
+				m_constraints.push_back(new Ball(&m_particles[i*NUM_COMPONENTS],
+												 &m_particles[j*NUM_COMPONENTS],
+												 0.2f,
+												 0.2f));
 			}
 		}
 
-		for(uint i = 1; i < m_particleCount; i += nSides) {
-			m_constraints.push_back(new ParticleConstraintDistance(p[i], p[i+nSides-1], 0.01));
-			for(uint j = 1; j < nSides; j++) {
-				m_constraints.push_back(new ParticleConstraintDistance(p[i+ j-1], p[i+ j], 0.01));								
-			}
-		}
-
-		for(uint i = 1; i < nSides+1; i++) {
-			m_constraints.push_back(new ParticleConstraintDistance(p[0], p[i], 0.01));				
-		}
-
-
-		for(uint i = 1 + nSides; i < m_particleCount; i += nSides) {
-			for(uint j = 0; j < nSides; j++) {
-				m_constraints.push_back(new ParticleConstraintDistance(p[i+ j], p[i+ j - nSides], 0.01));								
-			}
-		}
-
-		createParticle(0, -10, 0, &p[m_particleCount]);
-		m_constraints.push_back(new ParticleConstraintPin(p[m_particleCount-1]));
-
-		for(uint i = 1; i < m_particleCount-1; i++) {
-			m_constraints.push_back(new ParticleConstraintDistance(p[m_particleCount-1], p[i], 20, 0.01f));								
-		}
-
-		delete[] p;
-
-
-
-		// float *p;
-		// bool isValid;
-		// while((isValid = createParticle(0, 0, 0, &p)) == true);
-
-		// ParticleConstraint *pin = new ParticleConstraintPin(&m_particles[0], 0, 0, 0);
-		// m_constraints.push_back(pin);
-
-		// for(uint i = 1; i < m_particleCount-1; i++) {
-		// 	for(uint j = 2; j < m_particleCount; j++) {
-		// 		ParticleConstraint *constraint = new ParticleConstraintDistance(&m_particles[i*NUM_COMPONENTS],&m_particles[j*NUM_COMPONENTS],5.f,0.05f);
-		// 		m_constraints.push_back(constraint);
-		// 	}
-		// }
-
-		// ParticleConstraint *constraint = new ParticleConstraintDistance(&m_particles[0],&m_particles[6],5.f,0.05f);
-		// m_constraints.push_back(constraint);
-
-		// float *p[MAX_PARTICLES];
-		// for(uint i = 0; i < MAX_PARTICLES; i++) {
-		// 	createParticle(i, sin(i), 0, &p[i]);
-		// }
-
-		// // createParticle(10, 0, 0, &p[MAX_PARTICLES-1]);
-
-		// //pin base
-		// m_constraints.push_back(new ParticleConstraintPin(p[0], 0, 0, 0));
-
-		// for(uint i = 2; i < m_particleCount; i++) {
-		// 	m_constraints.push_back(new ParticleConstraintAngle(p[i-2], p[i-1], p[i], 0.349066f, 1.0f));
-		// }
-
-		// float *p_core[10];
-		// for(uint i = 0; i < 10; i++) {
-		// 	createParticle(i, i, 0, &p_core[i]);
-		// }
-
-		// float *p_supp[32];
-		// for(uint i = 0; i < 32; i+=4) {
-		// 	createParticle(1+ i/4 -0.25f, 1+ i/4 + 0.25f, 0, &p_supp[i]);
-		// 	createParticle(1+ i/4 +0.25f, 1+ i/4 - 0.25f, 0, &p_supp[i+1]);
-
-		// 	// m_constraints.push_back(new ParticleConstraintPlane(p_supp[i], false, false, true));
-		// 	// m_constraints.push_back(new ParticleConstraintPlane(p_supp[i+1], false, false, true));
-
-		// 	createParticle(1+ i/4, 1+ i/4, + 0.25f, &p_supp[i+2]);
-		// 	createParticle(1+ i/4, 1+ i/4, - 0.25f, &p_supp[i+3]);
-
-		// 	// m_constraints.push_back(new ParticleConstraintPlane(p_supp[i+2], false, false, true));
-		// 	// m_constraints.push_back(new ParticleConstraintPlane(p_supp[i+3], false, false, true));
-		// }		
-
-		// m_constraints.push_back(new ParticleConstraintPin(p_core[0]));
-		// // m_constraints.push_back(new ParticleConstraintPin(p_core[1]));
-		// // m_constraints.push_back(new ParticleConstraintPin(p_core[2]));
-		// // m_constraints.push_back(new ParticleConstraintPin(p_core[3]));
-		// // m_constraints.push_back(new ParticleConstraintPin(p_core[4]));
-		// // m_constraints.push_back(new ParticleConstraintPin(p_core[5]));
-
-		// float *p_brace;
-		// createParticle(-1, -4, 0, &p_brace);
-
-		// m_constraints.push_back(new ParticleConstraintPin(p_brace));
-		// for(uint i = 0; i < 10; i++) {
-		// 	m_constraints.push_back(new ParticleConstraintDistance(p_brace, p_core[i], 10, 0.01f));
-		// }
-
-
-		// //core branch
-		// for(uint i = 1; i < 10; i++) {
-		// 	m_constraints.push_back(new ParticleConstraintDistance(p_core[i-1], p_core[i], 1.0f));
-		// }
-
-		// // 1 -> 0/1
-		// // 2 -> 2/3
-		// // 3 -> 4/5
-
-		// //kites
-		// for(uint i = 1, j = 0; i < 9; i++) {
-		// 	// m_constraints.push_back(new ParticleConstraintDistance(p_core[i-1], p_supp[j], 1.0f));
-		// 	// m_constraints.push_back(new ParticleConstraintDistance(p_core[i-1], p_supp[j+1], 1.0f));
-		// 	// m_constraints.push_back(new ParticleConstraintDistance(p_core[i-1], p_supp[j+2], 1.0f));
-		// 	// m_constraints.push_back(new ParticleConstraintDistance(p_core[i-1], p_supp[j+3], 1.0f));
-
-		// 	// m_constraints.push_back(new ParticleConstraintDistance(p_core[i], p_supp[j], 1.0f));
-		// 	// m_constraints.push_back(new ParticleConstraintDistance(p_core[i], p_supp[j+1], 1.0f));
-		// 	// m_constraints.push_back(new ParticleConstraintDistance(p_core[i], p_supp[j+2], 1.0f));
-		// 	// m_constraints.push_back(new ParticleConstraintDistance(p_core[i], p_supp[j+3], 1.0f));
-
-		// 	// m_constraints.push_back(new ParticleConstraintDistance(p_supp[j], p_supp[j+2], 1.0f));
-		// 	// m_constraints.push_back(new ParticleConstraintDistance(p_supp[j+2], p_supp[j+1], 1.0f));
-		// 	// m_constraints.push_back(new ParticleConstraintDistance(p_supp[j+1], p_supp[j+3], 1.0f));
-		// 	// m_constraints.push_back(new ParticleConstraintDistance(p_supp[j+3], p_supp[j], 1.0f));
-
-		// 	// m_constraints.push_back(new ParticleConstraintDistance(p_core[i+1], p_supp[j], 1.0f));
-		// 	// m_constraints.push_back(new ParticleConstraintDistance(p_core[i+1], p_supp[j+1], 1.0f));
-		// 	// m_constraints.push_back(new ParticleConstraintDistance(p_core[i+1], p_supp[j+2], 1.0f));
-		// 	// m_constraints.push_back(new ParticleConstraintDistance(p_core[i+1], p_supp[j+3], 1.0f));
-
-		// 	j+=4;
-		// }
-
-
-		// for(uint i = 1; i < MAX_PARTICLES; i++) {
-		// 	m_constraints.push_back(new ParticleConstraintDistance(p[i-1], p[i], 0.01f));
-		// }
-
-		// //pin end
-		// m_constraints.push_back(new ParticleConstraintPin(p[MAX_PARTICLES-1], 10, 0, 0));		
-
-		// for(uint i = 2; i < MAX_PARTICLES; i++) {
-		// 	m_constraints.push_back(new ParticleConstraintDistance(p[i-1], p[i], 0.01f));
-		// 	if(i > 1) {
-		// 		float *m_a = p[i-2];
-		// 		float *m_b = p[i];
-
-		// 		float dx = m_a[0] - m_b[0];
-		// 		float dy = m_a[1] - m_b[1];
-		// 		float dz = m_a[2] - m_b[2];
-
-		// 		float distance = sqrt(dx*dx + dy*dy + dz*dz);
-
-		// 		if( i < MAX_PARTICLES-1) {
-		// 			m_constraints.push_back(new ParticleConstraintDistance(p[0], p[i], 0.01f));
-		// 		} else {
-		// 			m_constraints.push_back(new ParticleConstraintDistance(p[i-2], p[i], distance*0.5f, 0.01f));
-		// 		}
-		// 	}
-		// }
 
 
 		cout << "Created " << m_particleCount << " particles." << endl;
 	}
 
-	// void render() {
+	void render() {
+		//Create a new GLUquadric object; to allow you to draw cylinders
+		GLUquadric *quad = gluNewQuadric();
+		if (quad == 0) {
+			cerr << "Not enough memory to allocate space to draw" << endl;
+			exit(EXIT_FAILURE);
+		}
 
-	// }
+		for(uint i = 0; i < m_particleCount; i++) {
+			float *p = &m_particles[i*NUM_COMPONENTS];
+
+			glPushMatrix();
+				glTranslatef(p[0], p[1], p[2]);
+				gluSphere(quad, 0.2f, 8, 8);
+			glPopMatrix();
+		}
+
+		gluDeleteQuadric(quad);
+	}
 };
