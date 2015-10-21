@@ -166,16 +166,6 @@ void LSystem::draw(int iteration){
 }
 
 void LSystem::draw_pot(){
-    //Aaron
-    // GLUquadricObj *q = gluNewQuadric();
-    // glTranslatef(0.0,0.0,0.005f);
-    // gluCylinder(q,0.5,0.8,1.0,30,30);
-    // gluDisk(q,0.0,0.5,30,30);
-    // glTranslatef(0.0,0.0,0.9);
-    // setmat(5);
-    // gluDisk(q,0.0,0.7,10,10);
-
-    //Hamish
     GLUquadricObj *q = gluNewQuadric();
     glTranslatef(0.0,0.0,0.005f);
     gluCylinder(q,0.4,0.6,0.9,30,30);

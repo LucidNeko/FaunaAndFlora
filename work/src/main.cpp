@@ -109,6 +109,8 @@ float g_growthSpeed = 0.025f;
 
 GLuint g_mrtShader = 0;
 OBJLoader *g_objLoader = nullptr;
+
+bool treetoggle = true;
 LSystem *tree = new LSystem("P:I+[P+F]--//[--L]I[++L]-[PF]++PF "
                            "I:FS[//&&L][//^^L]FS "
                            "S:SFS "
@@ -117,6 +119,26 @@ LSystem *tree = new LSystem("P:I+[P+F]--//[--L]I[++L]-[PF]++PF "
                            "p:FF "
                            "W:[`^F][{&&&&-f+f|-f+f}]",
                    "P",18.0,"0:2 16:3 13:4");
+
+LSystem *tree2 = new LSystem("A:[&FL!A]/////`[&FL!A]///////`[&FL!A] "
+                            "F:S/////F "
+                            "S:FL "
+                            "L:[```^^{-f+f+f-|-f+f+f}]",
+                       "A",22.5,"0:2 14:3");
+
+void draw_tree(){
+    if(treetoggle)
+        tree->draw(5);
+    else
+        tree2->draw(6);
+}
+void tick_tree(){
+    if(treetoggle)
+        tree->tick();
+    else
+        tree2->tick();
+}
+
 //   ▄█  ███▄▄▄▄    ▄█      ███     
 //  ███  ███▀▀▀██▄ ███  ▀█████████▄ 
 //  ███▌ ███   ███ ███▌    ▀███▀▀██ 
@@ -529,7 +551,7 @@ void draw() {
 	} 
 
 	// TICK METHODS
-	tree->tick();
+	tick_tree();
 	g_particleSystem->tick(1.f/60.f);
 	g_particleSystemRope->tick(1.f/60.f);
 	g_particleSystemOBJ->tick(1.f/60.f);
@@ -576,7 +598,7 @@ void draw() {
 		glPushMatrix();
 			// glScalef(2,2,2);
 			glRotatef(-90,1,0,0);
-			tree->draw(5);
+			draw_tree();
 		glPopMatrix();
 		glUseProgram(0);
 // END OCCUSION DRAW
@@ -625,7 +647,7 @@ void draw() {
 		glPushMatrix();
 			// glScalef(2,2,2);
 			glRotatef(-90,1,0,0);
-			tree->draw(5);
+			draw_tree();
 		glPopMatrix();
 		glEnable(GL_DEPTH_TEST);
 		glUseProgram(0);
@@ -666,7 +688,7 @@ void draw() {
 		glPushMatrix();
 			// glScalef(2,2,2);
 			glRotatef(-90,1,0,0);
-			tree->draw(5);
+			draw_tree();
 		glPopMatrix();
 		glUseProgram(0);
 
@@ -772,6 +794,8 @@ void keyboardCallback(unsigned char key, int x, int y) {
 			g_growthSpeed += 0.01f; break;
 		case 'c' :
 			g_IsCubemapeEnabled = !g_IsCubemapeEnabled; break;
+        case '.':
+            treetoggle=!treetoggle;break;
 		case 'g' :
 			if(!g_gravity) {
 				g_particleSystem->setGravity(-100);

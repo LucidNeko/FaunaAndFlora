@@ -9,7 +9,9 @@ To build and run this program, run it as you would any of the previous assignmen
 
 -------------------------
 
-Controlls:
+Controls:
+
+    Change plant: . (the full stop key)
 
 	Modify colour of light: (this makes sense if you use the numpad)
 		Red channel 	+ 4 (increase red)
