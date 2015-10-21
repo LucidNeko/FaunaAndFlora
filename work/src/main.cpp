@@ -459,6 +459,7 @@ void drawScene(){
 void drawLight(){
 	glPushMatrix();
 	glTranslatef(lightPos.x,lightPos.y,lightPos.z);
+	// glutSolidCube(4);
 	glutSolidSphere(4,40,40);
 	glPopMatrix();
 }
@@ -542,6 +543,7 @@ void draw() {
 		lightPos.y = g_lightParticle[1];
 		lightPos.z = g_lightParticle[2];
 	}
+	g_lights->updateLights();
 
 	// Black background
 	// glClearColor(0.0f,0.0f,0.0f,1.0f);

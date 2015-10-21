@@ -20,7 +20,7 @@ varying vec3 vPosition;
 varying vec2 vTextureCoord0;
 varying vec3 vLight;
 
-varying vec4 lightPos;
+// varying vec4 lightPos;
 uniform vec3 lPos;
 void main() {
 	
@@ -29,6 +29,6 @@ void main() {
 	vTextureCoord0 = gl_MultiTexCoord0.xy;
 	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
 
-	lightPos = gl_ModelViewMatrix * vec4(lPos, 1.0);
+	// lightPos = gl_ModelViewMatrix * vec4(lPos, 1.0);
 	vLight = lPos;
 }

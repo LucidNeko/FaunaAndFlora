@@ -15,25 +15,33 @@ using namespace comp308;
 extern GLfloat g_zoomFactor;
 extern GLfloat g_xRotation;
 extern GLfloat g_yRotation;
-extern vec3 light;
-
+extern vec3 lightPos;
+extern vec3 volLightCol;
+// volLightCol.x,volLightCol.y,volLightCol.z
 Lights::Lights(){
-
-	// glMatrixMode(GL_PROJECTION);
-	// glLoadIdentity();
 	directionLight();
 	ambientLight();
-	// Set up the view part of the model view matrix
-	// glPushMatrix();
-	// glMatrixMode(GL_MODELVIEW);
-	// glLoadIdentity();
-
-	// glTranslatef(0, 0, -50 * g_zoomFactor);
-	// glRotatef(g_xRotation, 1, 0, 0);
-	// glRotatef(g_yRotation, 0, 1, 0);
 	pointLight();
 	spotLight();
-	// glPopMatrix();
+}
+
+void Lights::updateLights()
+{
+	glPushMatrix();
+		
+		glRotatef(g_xRotation, 1, 0, 0);
+		glRotatef(g_yRotation, 0, 1, 0);
+
+		glPushMatrix();
+			glTranslatef(lightPos.x, lightPos.y, lightPos.z);
+			pointLight();
+		glPopMatrix();
+
+		directionLight();
+		ambientLight();
+		spotLight();
+
+	glPopMatrix();
 }
 
 void Lights::ambientLight()
@@ -46,7 +54,7 @@ void Lights::ambientLight()
 void Lights::directionLight()
 {
 	GLfloat direction[]	    = {1.0f, 0.50f, 0.0f, 0.0f};
-	GLfloat diffintensity[] = {0.85098039215, 0.539215686274, 0.534901960784, 1.0f};
+	GLfloat diffintensity[] = {0.465, 0.464, 0.45, 1.0f};
 
 	glLightfv(GL_LIGHT2, GL_POSITION, direction);
 	glLightfv(GL_LIGHT2, GL_DIFFUSE,  diffintensity);
@@ -59,13 +67,13 @@ void Lights::pointLight()
 {
 	// POINT LIGHT
 	//
-	GLfloat lig_diff[] = {0.1545098039, 0.194901960784, 0.169411764705, 1.0};
-	GLfloat lig_spec[] = {0.445098039, 0.44901960784, 0.49411764705, 1.0};
+	GLfloat lig_diff[] = {volLightCol.x,volLightCol.y,volLightCol.z, 1.0};
+	GLfloat lig_spec[] = {0.9445098039, 0.944901960784, 0.949411764705, 1.0};
 
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, lig_diff);
 	glLightfv(GL_LIGHT1, GL_SPECULAR, lig_spec);
 
-	GLfloat light_pos[] = {-6.0, 2.0, -50.0, 1.0};
+	GLfloat light_pos[] = {-lightPos.x, lightPos.y, lightPos.z, 1.0};
 	glLightfv(GL_LIGHT1, GL_POSITION, light_pos);
 
 	GLfloat spot_dir[] = {0.0, -1.0, 0.0};
@@ -84,8 +92,8 @@ void Lights::spotLight()
 {
 	// SPOT LIGHT
 	//
-	GLfloat lig_diff[] = {0.50, 0.50, 1.0, 1.0};
-	GLfloat lig_spec[] = {0.50, 0.50, 1.0, 1.0};
+	GLfloat lig_diff[] = {0.050, 0.050, 0.10, 1.0};
+	GLfloat lig_spec[] = {0.050, 0.050, 0.10, 1.0};
 	
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, lig_diff);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, lig_spec);

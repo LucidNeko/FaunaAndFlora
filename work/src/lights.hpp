@@ -15,4 +15,5 @@ private:
 	void ambientLight();
 public:
 	Lights();
+	void updateLights();
 };

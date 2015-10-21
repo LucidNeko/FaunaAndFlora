@@ -23,27 +23,62 @@ varying vec3 vPosition;
 varying vec2 vTextureCoord0;
 varying vec3 vLight;
 
-varying vec4 lightPos;
-const int Quality = 64;
+// varying vec4 lightPos;
+const int radial_samples = 64;
+const float radial_blur = 0.8;   // blur factor
+const float radial_exposure = 0.90; // bright factor
 
 void main() {
-vec2 radial_origin = vLight.xy;
-vec2 radial_size = vec2(0.0,0.0);    // texel size
- 
-float radial_blur = 0.8;   // blur factor
-float radial_bright = 0.2; // bright factor
 
-  vec2 TexCoord = vTextureCoord0;
- 
-  vec4 SumColor = vec4(0.0, 0.0, 0.0, 0.0);
-  TexCoord += radial_size * 0.5 - radial_origin;
- 
-  for (int i = 0; i < Quality; i++) 
-  {
-    float scale = 1.0 - radial_blur * (float(i) / float(Quality));
-    SumColor += texture2D(texture0, TexCoord * scale + radial_origin);
+  vec2 TexCoord = vTextureCoord0 - vLight.xy;
+  vec4 SumColor= vec4(0.0, 0.0, 0.0, 0.0);
+
+
+  /*
+  // BOX LIGHT
+  if (vTextureCoord0.y < vLight.y){ // We are under the light source
+    if (abs(vTextureCoord0.x - vLight.x) < 0.2){ // We are within the bounds
+      // float x = 1.0;
+      for (int i = 0; i < radial_samples; i++) 
+      {
+        // float scale = 1.0 - radial_blur * (float(i) / float(radial_samples));
+        // SumColor += texture2D(texture0, TexCoord * scale + vLight.xy);
+        float scale = 1.0 - radial_blur * (float(i) / float(radial_samples));
+        SumColor += texture2D(texture0, vec2(vTextureCoord0.x, TexCoord.y * scale + vLight.y));
+      }
+    }
   }
- 
-  gl_FragColor = SumColor / 12.0 * radial_bright;    
+  */
 
+  /*
+  // SPOT LIGHT
+  vec2 lightDirection = normalize(vec2(-1.0,-1.0)); // Light pointing down and left
+  vec2 pixelToLight = normalize(vec2(vTextureCoord0 - vLight.xy));
+  float dotPixToLight = degrees(acos(dot(pixelToLight, lightDirection)));
+  float theta = 36.5;
+  if (dotPixToLight < theta){ // We are under the light source
+    // if (abs(vTextureCoord0.x - vLight.x) < 0.2){ // We are within the bounds
+      // float x = 1.0;
+      for (int i = 0; i < radial_samples; i++) 
+      {
+        float scale = 1.0 - radial_blur * (float(i) / float(radial_samples));
+        SumColor += texture2D(texture0, TexCoord * scale + vLight.xy);
+        // float scale = 1.0 - radial_blur * (float(i) / float(radial_samples));
+        // SumColor += texture2D(texture0, vec2(vTextureCoord0.x, TexCoord.y * scale + vLight.y));
+      }
+    // }
+  }
+  */
+  
+  
+  // POINT LIGHT
+  for (int i = 0; i < radial_samples; i++) 
+  {
+    float scale = 1.0 - radial_blur * (float(i) / float(radial_samples));
+    // SumColor += texture2D(texture0, TexCoord * scale + vLight.xy);
+  }
+  
+
+
+  gl_FragColor = SumColor / float(radial_samples) * radial_exposure;    
 }
