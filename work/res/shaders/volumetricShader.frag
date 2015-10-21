@@ -69,16 +69,14 @@ void main() {
     // }
   }
   */
-  
+
   
   // POINT LIGHT
   for (int i = 0; i < radial_samples; i++) 
   {
     float scale = 1.0 - radial_blur * (float(i) / float(radial_samples));
-    // SumColor += texture2D(texture0, TexCoord * scale + vLight.xy);
+    SumColor += texture2D(texture0, TexCoord * scale + vLight.xy);
   }
   
-
-
   gl_FragColor = SumColor / float(radial_samples) * radial_exposure;    
 }

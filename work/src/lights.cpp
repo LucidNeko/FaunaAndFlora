@@ -17,7 +17,6 @@ extern GLfloat g_xRotation;
 extern GLfloat g_yRotation;
 extern vec3 lightPos;
 extern vec3 volLightCol;
-// volLightCol.x,volLightCol.y,volLightCol.z
 Lights::Lights(){
 	directionLight();
 	ambientLight();

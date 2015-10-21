@@ -27,12 +27,6 @@ varying vec2 vTextureCoord0;
 uniform vec2 lightPos;
 
 void main() {
-
-
-
-	// gl_FragColor = mix(texture2D(texture0, vTextureCoord0), texture2D(texture1, vTextureCoord0), 0.5);
-	// gl_FragColor = normalize(texture2D(texture2, vTextureCoord0) + texture2D(texture1, vTextureCoord0));
+	// gl_FragColor = texture2D(texture1, vTextureCoord0);
 	gl_FragColor = texture2D(texture0, vTextureCoord0) + texture2D(texture2, vTextureCoord0)*0.7;
-	// gl_FragColor = texture2D(texture2, vTextureCoord0);
-	// gl_FragColor = vec4(1,0,0,1);
 }
